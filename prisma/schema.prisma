@@ -1,0 +1,244 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+
+  @@map("user_role")
+}
+
+enum InstitutionType {
+  SCHOOL
+  UNIVERSITY
+
+  @@map("institution_type")
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  FINISHED
+
+  @@map("publication_status")
+}
+
+enum MeetingStatus {
+  LOCKED
+  RELEASED
+
+  @@map("meeting_status")
+}
+
+enum EnrollmentStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+
+  @@map("enrollment_status")
+}
+
+enum PaymentProvider {
+  STRIPE
+  MERCADOPAGO
+  MOCK
+
+  @@map("payment_provider")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+
+  @@map("payment_status")
+}
+
+model User {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supabaseId     String          @unique @map("supabase_id")
+  name           String          @db.VarChar(200)
+  email          String          @unique @db.VarChar(200)
+  phone          String          @db.VarChar(30)
+  role           UserRole
+  createdAt      DateTime        @default(now()) @map("created_at")
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+
+  @@map("users")
+}
+
+model StudentProfile {
+  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                 String               @unique @map("user_id") @db.Uuid
+  preferredInstitutionId String?              @map("preferred_institution_id") @db.Uuid
+  labels                 String[]             @default([])
+  user                   User                 @relation(fields: [userId], references: [id])
+  preferredInstitution   Institution?         @relation("PreferredInstitution", fields: [preferredInstitutionId], references: [id])
+  institutions           StudentInstitution[]
+  enrollments            Enrollment[]
+
+  @@map("student_profiles")
+}
+
+model TeacherProfile {
+  id           String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String               @unique @map("user_id") @db.Uuid
+  photo        String               @default("??") @db.VarChar(2)
+  photoUrl     String?              @map("photo_url")
+  bio          String               @default("")
+  headline     String               @default("") @db.VarChar(100)
+  labels       String[]             @default([])
+  isVerified   Boolean              @default(false) @map("is_verified")
+  user         User                 @relation(fields: [userId], references: [id])
+  institutions TeacherInstitution[]
+  subjects     TeacherSubject[]
+  classEvents  ClassEvent[]
+
+  @@map("teacher_profiles")
+}
+
+model Institution {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String               @db.VarChar(200)
+  shortName           String               @map("short_name") @db.VarChar(50)
+  city                String               @db.VarChar(100)
+  type                InstitutionType
+  logoUrl             String               @map("logo_url")
+  subjects            InstitutionSubject[]
+  classEvents         ClassEvent[]
+  teacherInstitutions TeacherInstitution[]
+  studentInstitutions StudentInstitution[]
+  preferredByStudents StudentProfile[]     @relation("PreferredInstitution")
+
+  @@map("institutions")
+}
+
+model Subject {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String               @db.VarChar(100)
+  icon                String?              @db.VarChar(50)
+  institutionSubjects InstitutionSubject[]
+  teacherSubjects     TeacherSubject[]
+  classEvents         ClassEvent[]
+
+  @@map("subjects")
+}
+
+model InstitutionSubject {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institutionId String      @map("institution_id") @db.Uuid
+  subjectId     String      @map("subject_id") @db.Uuid
+  yearLabel     String      @map("year_label") @db.VarChar(50)
+  yearOrder     Int         @map("year_order")
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  subject       Subject     @relation(fields: [subjectId], references: [id])
+
+  @@unique([institutionId, subjectId, yearLabel])
+  @@map("institution_subjects")
+}
+
+// Junction table: replaces institution_ids UUID[] array in TeacherProfile
+model TeacherInstitution {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teacherProfileId String         @map("teacher_profile_id") @db.Uuid
+  institutionId    String         @map("institution_id") @db.Uuid
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+  institution      Institution    @relation(fields: [institutionId], references: [id])
+
+  @@unique([teacherProfileId, institutionId])
+  @@map("teacher_institutions")
+}
+
+// Junction table: replaces institution_ids UUID[] array in StudentProfile
+model StudentInstitution {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentProfileId String         @map("student_profile_id") @db.Uuid
+  institutionId    String         @map("institution_id") @db.Uuid
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id])
+  institution      Institution    @relation(fields: [institutionId], references: [id])
+
+  @@unique([studentProfileId, institutionId])
+  @@map("student_institutions")
+}
+
+model TeacherSubject {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teacherProfileId String         @map("teacher_profile_id") @db.Uuid
+  subjectId        String         @map("subject_id") @db.Uuid
+  levelTag         String?        @map("level_tag") @db.VarChar(50)
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+  subject          Subject        @relation(fields: [subjectId], references: [id])
+
+  @@unique([teacherProfileId, subjectId])
+  @@map("teacher_subjects")
+}
+
+model ClassEvent {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String            @db.VarChar(200)
+  description       String
+  teacherProfileId  String            @map("teacher_profile_id") @db.Uuid
+  subjectId         String            @map("subject_id") @db.Uuid
+  institutionId     String            @map("institution_id") @db.Uuid
+  startsAt          DateTime          @map("starts_at")
+  durationMin       Int               @map("duration_min")
+  priceCents        Int               @map("price_cents")
+  capacity          Int
+  soldSeats         Int               @default(0) @map("sold_seats")
+  publicationStatus PublicationStatus @default(DRAFT) @map("publication_status")
+  meetingStatus     MeetingStatus     @default(LOCKED) @map("meeting_status")
+  meetingUrl        String?           @map("meeting_url")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  teacherProfile    TeacherProfile    @relation(fields: [teacherProfileId], references: [id])
+  subject           Subject           @relation(fields: [subjectId], references: [id])
+  institution       Institution       @relation(fields: [institutionId], references: [id])
+  enrollments       Enrollment[]
+
+  @@index([institutionId])
+  @@index([subjectId])
+  @@index([teacherProfileId])
+  @@index([publicationStatus])
+  @@map("class_events")
+}
+
+model Enrollment {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classEventId     String           @map("class_event_id") @db.Uuid
+  studentProfileId String           @map("student_profile_id") @db.Uuid
+  status           EnrollmentStatus @default(PENDING)
+  createdAt        DateTime         @default(now()) @map("created_at")
+  classEvent       ClassEvent       @relation(fields: [classEventId], references: [id])
+  studentProfile   StudentProfile   @relation(fields: [studentProfileId], references: [id])
+  payment          Payment?
+
+  @@unique([classEventId, studentProfileId])
+  @@index([classEventId])
+  @@index([studentProfileId])
+  @@map("enrollments")
+}
+
+model Payment {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollmentId String          @unique @map("enrollment_id") @db.Uuid
+  provider     PaymentProvider
+  amountCents  Int             @map("amount_cents")
+  status       PaymentStatus   @default(PENDING)
+  createdAt    DateTime        @default(now()) @map("created_at")
+  enrollment   Enrollment      @relation(fields: [enrollmentId], references: [id])
+
+  @@index([enrollmentId])
+  @@map("payments")
+}
