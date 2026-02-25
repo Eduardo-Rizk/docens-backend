@@ -1,4 +1,10 @@
-import { PrismaClient, InstitutionType } from '@prisma/client';
+import {
+  PrismaClient,
+  InstitutionType,
+  UserRole,
+  PublicationStatus,
+  MeetingStatus,
+} from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -31,6 +37,31 @@ const SUBJECT_IDS = {
   Geografia: 'bbbbbbbb-0002-0002-0002-000000000011',
   Estatistica: 'bbbbbbbb-0002-0002-0002-000000000012',
   Ingles: 'bbbbbbbb-0002-0002-0002-000000000013',
+};
+
+const USER_IDS = {
+  Rafael: 'dddddddd-0004-0004-0004-000000000001',
+  Luiza: 'dddddddd-0004-0004-0004-000000000002',
+  Carlos: 'dddddddd-0004-0004-0004-000000000003',
+  Mariana: 'dddddddd-0004-0004-0004-000000000004',
+};
+
+const TEACHER_PROFILE_IDS = {
+  Rafael: 'eeeeeeee-0005-0005-0005-000000000001',
+  Luiza: 'eeeeeeee-0005-0005-0005-000000000002',
+  Carlos: 'eeeeeeee-0005-0005-0005-000000000003',
+  Mariana: 'eeeeeeee-0005-0005-0005-000000000004',
+};
+
+const CLASS_EVENT_IDS = {
+  'Rafael-Calculo-Insper': '22222222-0008-0008-0008-000000000001',
+  'Rafael-Estatistica-Insper': '22222222-0008-0008-0008-000000000002',
+  'Luiza-DirConst-FGV': '22222222-0008-0008-0008-000000000003',
+  'Luiza-Redacao-FGV': '22222222-0008-0008-0008-000000000004',
+  'Carlos-Matematica-Mobile': '22222222-0008-0008-0008-000000000005',
+  'Carlos-Fisica-Bandeirantes': '22222222-0008-0008-0008-000000000006',
+  'Mariana-Calculo-Inteli': '22222222-0008-0008-0008-000000000007',
+  'Mariana-Fisica-Insper': '22222222-0008-0008-0008-000000000008',
 };
 
 // ============================================================================
@@ -190,7 +221,268 @@ const institutionSubjects = [
 ];
 
 // ============================================================================
+// USERS — 4 teacher users with fake supabaseId (seed only, not real auth)
+// ============================================================================
+
+const users = [
+  {
+    id: USER_IDS.Rafael,
+    supabaseId: 'fake-supabase-rafael',
+    name: 'Rafael Prado',
+    email: 'rafael@docens.test',
+    phone: '+55 11 99999-0001',
+    role: 'TEACHER' as UserRole,
+  },
+  {
+    id: USER_IDS.Luiza,
+    supabaseId: 'fake-supabase-luiza',
+    name: 'Luiza Costa',
+    email: 'luiza@docens.test',
+    phone: '+55 11 99999-0002',
+    role: 'TEACHER' as UserRole,
+  },
+  {
+    id: USER_IDS.Carlos,
+    supabaseId: 'fake-supabase-carlos',
+    name: 'Carlos Mendes',
+    email: 'carlos@docens.test',
+    phone: '+55 11 99999-0003',
+    role: 'TEACHER' as UserRole,
+  },
+  {
+    id: USER_IDS.Mariana,
+    supabaseId: 'fake-supabase-mariana',
+    name: 'Mariana Silva',
+    email: 'mariana@docens.test',
+    phone: '+55 11 99999-0004',
+    role: 'TEACHER' as UserRole,
+  },
+];
+
+// ============================================================================
+// TEACHER PROFILES — photo (2-char initials), headline, bio
+// ============================================================================
+
+const teacherProfiles = [
+  {
+    id: TEACHER_PROFILE_IDS.Rafael,
+    userId: USER_IDS.Rafael,
+    photo: 'RP',
+    headline: 'Especialista em Calculo e Estatistica',
+    bio: 'Professor com 10 anos de experiencia em universidades de Sao Paulo. Mestrado em Matematica Aplicada pela USP.',
+    isVerified: true,
+  },
+  {
+    id: TEACHER_PROFILE_IDS.Luiza,
+    userId: USER_IDS.Luiza,
+    photo: 'LC',
+    headline: 'Professora de Direito e Redacao',
+    bio: 'Advogada e educadora. Doutora em Direito Constitucional pela FGV. Apaixonada por ensino.',
+    isVerified: true,
+  },
+  {
+    id: TEACHER_PROFILE_IDS.Carlos,
+    userId: USER_IDS.Carlos,
+    photo: 'CM',
+    headline: 'Professor de Matematica e Fisica',
+    bio: 'Engenheiro e professor. Mais de 15 anos preparando alunos para vestibulares e concursos.',
+    isVerified: true,
+  },
+  {
+    id: TEACHER_PROFILE_IDS.Mariana,
+    userId: USER_IDS.Mariana,
+    photo: 'MS',
+    headline: 'Especialista em Calculo e Fisica',
+    bio: 'Doutora em Fisica pela Unicamp. Experiencia em universidades de tecnologia e engenharia.',
+    isVerified: true,
+  },
+];
+
+// ============================================================================
+// TEACHER-INSTITUTION JUNCTION ROWS
+// Deterministic UUID pattern: ffffffff-0006-0006-0006-{padded index}
+// ============================================================================
+
+const teacherInstitutions = [
+  // Rafael -> Insper, FGV
+  { id: 'ffffffff-0006-0006-0006-000000000001', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, institutionId: INSTITUTION_IDS.Insper },
+  { id: 'ffffffff-0006-0006-0006-000000000002', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, institutionId: INSTITUTION_IDS.FGV },
+  // Luiza -> FGV, Mobile
+  { id: 'ffffffff-0006-0006-0006-000000000003', teacherProfileId: TEACHER_PROFILE_IDS.Luiza, institutionId: INSTITUTION_IDS.FGV },
+  { id: 'ffffffff-0006-0006-0006-000000000004', teacherProfileId: TEACHER_PROFILE_IDS.Luiza, institutionId: INSTITUTION_IDS['Col. Mobile'] },
+  // Carlos -> Mobile, Bandeirantes
+  { id: 'ffffffff-0006-0006-0006-000000000005', teacherProfileId: TEACHER_PROFILE_IDS.Carlos, institutionId: INSTITUTION_IDS['Col. Mobile'] },
+  { id: 'ffffffff-0006-0006-0006-000000000006', teacherProfileId: TEACHER_PROFILE_IDS.Carlos, institutionId: INSTITUTION_IDS['Col. Bandeirantes'] },
+  // Mariana -> Inteli, Insper
+  { id: 'ffffffff-0006-0006-0006-000000000007', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, institutionId: INSTITUTION_IDS.Inteli },
+  { id: 'ffffffff-0006-0006-0006-000000000008', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, institutionId: INSTITUTION_IDS.Insper },
+];
+
+// ============================================================================
+// TEACHER-SUBJECT JUNCTION ROWS
+// Deterministic UUID pattern: 11111111-0007-0007-0007-{padded index}
+// ============================================================================
+
+const teacherSubjects = [
+  // Rafael -> Calculo I, Estatistica
+  { id: '11111111-0007-0007-0007-000000000001', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, subjectId: SUBJECT_IDS['Calculo I'] },
+  { id: '11111111-0007-0007-0007-000000000002', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, subjectId: SUBJECT_IDS.Estatistica },
+  // Luiza -> Direito Constitucional, Redacao
+  { id: '11111111-0007-0007-0007-000000000003', teacherProfileId: TEACHER_PROFILE_IDS.Luiza, subjectId: SUBJECT_IDS['Direito Constitucional'] },
+  { id: '11111111-0007-0007-0007-000000000004', teacherProfileId: TEACHER_PROFILE_IDS.Luiza, subjectId: SUBJECT_IDS.Redacao },
+  // Carlos -> Matematica, Fisica
+  { id: '11111111-0007-0007-0007-000000000005', teacherProfileId: TEACHER_PROFILE_IDS.Carlos, subjectId: SUBJECT_IDS.Matematica },
+  { id: '11111111-0007-0007-0007-000000000006', teacherProfileId: TEACHER_PROFILE_IDS.Carlos, subjectId: SUBJECT_IDS.Fisica },
+  // Mariana -> Calculo I, Fisica
+  { id: '11111111-0007-0007-0007-000000000007', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, subjectId: SUBJECT_IDS['Calculo I'] },
+  { id: '11111111-0007-0007-0007-000000000008', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, subjectId: SUBJECT_IDS.Fisica },
+];
+
+// ============================================================================
+// CLASS EVENTS — 8 events across different institutions, subjects, teachers
+// 4 PUBLISHED (future), 2 FINISHED (past), 2 DRAFT (excluded from browse)
+// ============================================================================
+
+const classEvents = [
+  // --- 4 PUBLISHED events (future dates: March/April 2026) ---
+  {
+    id: CLASS_EVENT_IDS['Rafael-Calculo-Insper'],
+    title: 'Calculo I - Limites e Derivadas',
+    description: 'Aula intensiva sobre limites, continuidade e derivadas. Ideal para revisao antes da P1.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Rafael,
+    subjectId: SUBJECT_IDS['Calculo I'],
+    institutionId: INSTITUTION_IDS.Insper,
+    startsAt: new Date('2026-03-15T14:00:00Z'),
+    durationMin: 90,
+    priceCents: 9900,
+    capacity: 50,
+    soldSeats: 22,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Rafael-Estatistica-Insper'],
+    title: 'Estatistica Descritiva - Medidas de Tendencia Central',
+    description: 'Revisao completa de media, mediana, moda e desvio padrao com exercicios praticos.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Rafael,
+    subjectId: SUBJECT_IDS.Estatistica,
+    institutionId: INSTITUTION_IDS.Insper,
+    startsAt: new Date('2026-03-22T10:00:00Z'),
+    durationMin: 60,
+    priceCents: 7900,
+    capacity: 40,
+    soldSeats: 15,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Luiza-DirConst-FGV'],
+    title: 'Direito Constitucional - Principios Fundamentais',
+    description: 'Estudo aprofundado dos principios fundamentais da Constituicao Federal de 1988.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Luiza,
+    subjectId: SUBJECT_IDS['Direito Constitucional'],
+    institutionId: INSTITUTION_IDS.FGV,
+    startsAt: new Date('2026-04-05T19:00:00Z'),
+    durationMin: 120,
+    priceCents: 14900,
+    capacity: 80,
+    soldSeats: 45,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Carlos-Matematica-Mobile'],
+    title: 'Matematica - Funcoes Exponenciais e Logaritmicas',
+    description: 'Revisao de funcoes exponenciais e logaritmicas com foco em vestibular.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Carlos,
+    subjectId: SUBJECT_IDS.Matematica,
+    institutionId: INSTITUTION_IDS['Col. Mobile'],
+    startsAt: new Date('2026-04-10T15:00:00Z'),
+    durationMin: 90,
+    priceCents: 5900,
+    capacity: 30,
+    soldSeats: 10,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+
+  // --- 2 FINISHED events (past dates: January/February 2026) ---
+  {
+    id: CLASS_EVENT_IDS['Carlos-Fisica-Bandeirantes'],
+    title: 'Fisica - Cinematica Escalar',
+    description: 'Aula sobre MRU e MRUV com resolucao de exercicios classicos de vestibular.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Carlos,
+    subjectId: SUBJECT_IDS.Fisica,
+    institutionId: INSTITUTION_IDS['Col. Bandeirantes'],
+    startsAt: new Date('2026-01-20T14:00:00Z'),
+    durationMin: 90,
+    priceCents: 6900,
+    capacity: 60,
+    soldSeats: 48,
+    publicationStatus: 'FINISHED' as PublicationStatus,
+    meetingStatus: 'RELEASED' as MeetingStatus,
+    meetingUrl: 'https://meet.docens.app/fisica-cinematica-abc123',
+  },
+  {
+    id: CLASS_EVENT_IDS['Mariana-Fisica-Insper'],
+    title: 'Fisica - Termodinamica e Calorimetria',
+    description: 'Conceitos fundamentais de termodinamica aplicados a problemas de engenharia.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Mariana,
+    subjectId: SUBJECT_IDS.Fisica,
+    institutionId: INSTITUTION_IDS.Insper,
+    startsAt: new Date('2026-02-10T16:00:00Z'),
+    durationMin: 60,
+    priceCents: 8900,
+    capacity: 45,
+    soldSeats: 38,
+    publicationStatus: 'FINISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+
+  // --- 2 DRAFT events (should NEVER appear in browse results) ---
+  {
+    id: CLASS_EVENT_IDS['Mariana-Calculo-Inteli'],
+    title: 'Calculo I - Integrais Definidas (RASCUNHO)',
+    description: 'Aula sobre integrais definidas e o Teorema Fundamental do Calculo. Ainda em preparacao.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Mariana,
+    subjectId: SUBJECT_IDS['Calculo I'],
+    institutionId: INSTITUTION_IDS.Inteli,
+    startsAt: new Date('2026-04-20T10:00:00Z'),
+    durationMin: 90,
+    priceCents: 9900,
+    capacity: 35,
+    soldSeats: 0,
+    publicationStatus: 'DRAFT' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Luiza-Redacao-FGV'],
+    title: 'Redacao Argumentativa - Estrutura e Coesao (RASCUNHO)',
+    description: 'Tecnicas de redacao argumentativa para provas discursivas. Ainda sendo revisada.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Luiza,
+    subjectId: SUBJECT_IDS.Redacao,
+    institutionId: INSTITUTION_IDS.FGV,
+    startsAt: new Date('2026-03-30T18:00:00Z'),
+    durationMin: 120,
+    priceCents: 19900,
+    capacity: 100,
+    soldSeats: 0,
+    publicationStatus: 'DRAFT' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+];
+
+// ============================================================================
 // SEED EXECUTION — idempotent via upsert
+// FK order: subjects + institutions -> institution-subjects -> users ->
+//           teacher profiles -> junction tables -> class events
 // ============================================================================
 
 async function main() {
@@ -224,6 +516,56 @@ async function main() {
   }
   console.log(`  ${institutionSubjects.length} institution-subject associations seeded.`);
 
+  console.log('Seeding users...');
+  for (const user of users) {
+    await prisma.user.upsert({
+      where: { id: user.id },
+      update: {},
+      create: user,
+    });
+  }
+  console.log(`  ${users.length} users seeded.`);
+
+  console.log('Seeding teacher profiles...');
+  for (const profile of teacherProfiles) {
+    await prisma.teacherProfile.upsert({
+      where: { id: profile.id },
+      update: {},
+      create: profile,
+    });
+  }
+  console.log(`  ${teacherProfiles.length} teacher profiles seeded.`);
+
+  console.log('Seeding teacher-institution associations...');
+  for (const ti of teacherInstitutions) {
+    await prisma.teacherInstitution.upsert({
+      where: { id: ti.id },
+      update: {},
+      create: ti,
+    });
+  }
+  console.log(`  ${teacherInstitutions.length} teacher-institution associations seeded.`);
+
+  console.log('Seeding teacher-subject associations...');
+  for (const ts of teacherSubjects) {
+    await prisma.teacherSubject.upsert({
+      where: { id: ts.id },
+      update: {},
+      create: ts,
+    });
+  }
+  console.log(`  ${teacherSubjects.length} teacher-subject associations seeded.`);
+
+  console.log('Seeding class events...');
+  for (const event of classEvents) {
+    await prisma.classEvent.upsert({
+      where: { id: event.id },
+      update: {},
+      create: event,
+    });
+  }
+  console.log(`  ${classEvents.length} class events seeded.`);
+
   console.log('Seed complete.');
 }
 
@@ -233,3 +575,14 @@ main()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
+
+// ============================================================================
+// EXPORTED ID MAPS — for test files and future reference
+// ============================================================================
+export {
+  INSTITUTION_IDS,
+  SUBJECT_IDS,
+  USER_IDS,
+  TEACHER_PROFILE_IDS,
+  CLASS_EVENT_IDS,
+};
