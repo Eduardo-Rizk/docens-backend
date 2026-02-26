@@ -186,6 +186,21 @@ export class AuthService {
     };
   }
 
+  async resetPassword(email: string) {
+    const frontendUrl =
+      this.configService.getOrThrow<string>('FRONTEND_URL');
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${frontendUrl}/auth/callback?type=recovery`,
+    });
+    if (error) {
+      throw new BadRequestException({
+        error: 'BAD_REQUEST',
+        message: error.message,
+      });
+    }
+    return { message: 'Password reset email sent' };
+  }
+
   async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
