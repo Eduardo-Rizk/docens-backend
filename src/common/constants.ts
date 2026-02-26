@@ -45,3 +45,55 @@ export const CLASS_EVENT_PUBLIC_SELECT = {
 export const BROWSE_PUBLICATION_FILTER = {
   in: ['PUBLISHED', 'FINISHED'] as const,
 };
+
+// ---------------------------------------------------------------------------
+// State machine constants for class event lifecycle
+// ---------------------------------------------------------------------------
+
+/**
+ * Core fields locked after PUBLISHED — students purchase based on these.
+ * Editing these on a PUBLISHED event would invalidate existing enrollments.
+ */
+export const CORE_FIELDS = [
+  'title',
+  'subjectId',
+  'institutionId',
+  'startsAt',
+  'durationMin',
+  'priceCents',
+  'capacity',
+] as const;
+
+/**
+ * State machine for publicationStatus.
+ * DRAFT -> PUBLISHED, PUBLISHED -> FINISHED or DRAFT (unpublish, only if no enrollments), FINISHED -> terminal.
+ */
+export const PUBLICATION_TRANSITIONS: Record<string, string[]> = {
+  DRAFT: ['PUBLISHED'],
+  PUBLISHED: ['FINISHED', 'DRAFT'], // DRAFT = unpublish (only if no enrollments)
+  FINISHED: [], // terminal state
+};
+
+/**
+ * State machine for meetingStatus.
+ * Toggle between LOCKED and RELEASED.
+ */
+export const MEETING_TRANSITIONS: Record<string, string[]> = {
+  LOCKED: ['RELEASED'],
+  RELEASED: ['LOCKED'], // toggle allowed
+};
+
+/**
+ * Action -> target state mapping.
+ * Maps ClassEventAction enum values to the field and target status they affect.
+ */
+export const ACTION_MAP: Record<
+  string,
+  { field: 'publicationStatus' | 'meetingStatus'; targetStatus: string }
+> = {
+  publish: { field: 'publicationStatus', targetStatus: 'PUBLISHED' },
+  unpublish: { field: 'publicationStatus', targetStatus: 'DRAFT' },
+  finish: { field: 'publicationStatus', targetStatus: 'FINISHED' },
+  'release-meeting': { field: 'meetingStatus', targetStatus: 'RELEASED' },
+  'lock-meeting': { field: 'meetingStatus', targetStatus: 'LOCKED' },
+};
