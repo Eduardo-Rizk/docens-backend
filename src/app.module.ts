@@ -10,6 +10,7 @@ import { TeachersModule } from './teachers/teachers.module';
 import { ClassEventsModule } from './class-events/class-events.module';
 import { TeacherProfileModule } from './teacher-profile/teacher-profile.module';
 import { TeacherModule } from './teacher/teacher.module';
+import { StudentProfileModule } from './student-profile/student-profile.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -31,6 +32,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     ClassEventsModule,
     TeacherProfileModule,
     TeacherModule,
+    StudentProfileModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
