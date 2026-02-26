@@ -53,6 +53,18 @@ const TEACHER_PROFILE_IDS = {
   Mariana: 'eeeeeeee-0005-0005-0005-000000000004',
 };
 
+const STUDENT_USER_IDS = {
+  Ana: 'dddddddd-0004-0004-0004-000000000010',
+  CarlosAluno: 'dddddddd-0004-0004-0004-000000000011',
+  Beatriz: 'dddddddd-0004-0004-0004-000000000012',
+};
+
+const STUDENT_PROFILE_IDS = {
+  Ana: 'eeeeeeee-0005-0005-0005-000000000010',
+  CarlosAluno: 'eeeeeeee-0005-0005-0005-000000000011',
+  Beatriz: 'eeeeeeee-0005-0005-0005-000000000012',
+};
+
 const CLASS_EVENT_IDS = {
   'Rafael-Calculo-Insper': '22222222-0008-0008-0008-000000000001',
   'Rafael-Estatistica-Insper': '22222222-0008-0008-0008-000000000002',
@@ -480,6 +492,78 @@ const classEvents = [
 ];
 
 // ============================================================================
+// STUDENT USERS — 3 student users for enrollment/payment testing
+// ============================================================================
+
+const studentUsers = [
+  {
+    id: STUDENT_USER_IDS.Ana,
+    supabaseId: 'fake-supabase-ana',
+    name: 'Ana Silva',
+    email: 'ana@docens.test',
+    phone: '+55 11 98888-0001',
+    role: 'STUDENT' as UserRole,
+  },
+  {
+    id: STUDENT_USER_IDS.CarlosAluno,
+    supabaseId: 'fake-supabase-carlos-aluno',
+    name: 'Carlos Aluno Mendes',
+    email: 'carlos.aluno@docens.test',
+    phone: '+55 11 98888-0002',
+    role: 'STUDENT' as UserRole,
+  },
+  {
+    id: STUDENT_USER_IDS.Beatriz,
+    supabaseId: 'fake-supabase-beatriz',
+    name: 'Beatriz Santos',
+    email: 'beatriz@docens.test',
+    phone: '+55 11 98888-0003',
+    role: 'STUDENT' as UserRole,
+  },
+];
+
+// ============================================================================
+// STUDENT PROFILES
+// ============================================================================
+
+const studentProfiles = [
+  {
+    id: STUDENT_PROFILE_IDS.Ana,
+    userId: STUDENT_USER_IDS.Ana,
+    preferredInstitutionId: INSTITUTION_IDS.Insper,
+    labels: ['vestibular', 'engenharia'],
+  },
+  {
+    id: STUDENT_PROFILE_IDS.CarlosAluno,
+    userId: STUDENT_USER_IDS.CarlosAluno,
+    preferredInstitutionId: INSTITUTION_IDS.Inteli,
+    labels: ['tecnologia'],
+  },
+  {
+    id: STUDENT_PROFILE_IDS.Beatriz,
+    userId: STUDENT_USER_IDS.Beatriz,
+    preferredInstitutionId: INSTITUTION_IDS.FGV,
+    labels: ['direito', 'concurso'],
+  },
+];
+
+// ============================================================================
+// STUDENT-INSTITUTION JUNCTION ROWS
+// Deterministic UUID pattern: gggggggg-0009-0009-0009-{padded index}
+// ============================================================================
+
+const studentInstitutions = [
+  // Ana -> FGV, Insper
+  { id: 'gggggggg-0009-0009-0009-000000000001', studentProfileId: STUDENT_PROFILE_IDS.Ana, institutionId: INSTITUTION_IDS.FGV },
+  { id: 'gggggggg-0009-0009-0009-000000000002', studentProfileId: STUDENT_PROFILE_IDS.Ana, institutionId: INSTITUTION_IDS.Insper },
+  // CarlosAluno -> Inteli
+  { id: 'gggggggg-0009-0009-0009-000000000003', studentProfileId: STUDENT_PROFILE_IDS.CarlosAluno, institutionId: INSTITUTION_IDS.Inteli },
+  // Beatriz -> FGV, Col. Bandeirantes
+  { id: 'gggggggg-0009-0009-0009-000000000004', studentProfileId: STUDENT_PROFILE_IDS.Beatriz, institutionId: INSTITUTION_IDS.FGV },
+  { id: 'gggggggg-0009-0009-0009-000000000005', studentProfileId: STUDENT_PROFILE_IDS.Beatriz, institutionId: INSTITUTION_IDS['Col. Bandeirantes'] },
+];
+
+// ============================================================================
 // SEED EXECUTION — idempotent via upsert
 // FK order: subjects + institutions -> institution-subjects -> users ->
 //           teacher profiles -> junction tables -> class events
@@ -566,6 +650,36 @@ async function main() {
   }
   console.log(`  ${classEvents.length} class events seeded.`);
 
+  console.log('Seeding student users...');
+  for (const user of studentUsers) {
+    await prisma.user.upsert({
+      where: { id: user.id },
+      update: {},
+      create: user,
+    });
+  }
+  console.log(`  ${studentUsers.length} student users seeded.`);
+
+  console.log('Seeding student profiles...');
+  for (const profile of studentProfiles) {
+    await prisma.studentProfile.upsert({
+      where: { id: profile.id },
+      update: {},
+      create: profile,
+    });
+  }
+  console.log(`  ${studentProfiles.length} student profiles seeded.`);
+
+  console.log('Seeding student-institution associations...');
+  for (const si of studentInstitutions) {
+    await prisma.studentInstitution.upsert({
+      where: { id: si.id },
+      update: {},
+      create: si,
+    });
+  }
+  console.log(`  ${studentInstitutions.length} student-institution associations seeded.`);
+
   console.log('Seed complete.');
 }
 
@@ -585,4 +699,6 @@ export {
   USER_IDS,
   TEACHER_PROFILE_IDS,
   CLASS_EVENT_IDS,
+  STUDENT_USER_IDS,
+  STUDENT_PROFILE_IDS,
 };

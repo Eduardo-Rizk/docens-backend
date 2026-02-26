@@ -97,3 +97,20 @@ export const ACTION_MAP: Record<
   'release-meeting': { field: 'meetingStatus', targetStatus: 'RELEASED' },
   'lock-meeting': { field: 'meetingStatus', targetStatus: 'LOCKED' },
 };
+
+// ---------------------------------------------------------------------------
+// Active enrollment filter (lazy expiration)
+// ---------------------------------------------------------------------------
+
+/**
+ * Prisma `where` filter for active enrollments.
+ * Active = PAID, or PENDING with expiresAt in the future.
+ * Use this everywhere enrollments are queried to ensure expired
+ * PENDING reservations are excluded (lazy expiration per CONTEXT.md).
+ */
+export const activeEnrollmentWhere = (now: Date) => ({
+  OR: [
+    { status: 'PAID' as const },
+    { status: 'PENDING' as const, expiresAt: { gt: now } },
+  ],
+});

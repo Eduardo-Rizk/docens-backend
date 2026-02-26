@@ -220,6 +220,7 @@ model Enrollment {
   studentProfileId String           @map("student_profile_id") @db.Uuid
   status           EnrollmentStatus @default(PENDING)
   createdAt        DateTime         @default(now()) @map("created_at")
+  expiresAt        DateTime?        @map("expires_at")
   classEvent       ClassEvent       @relation(fields: [classEventId], references: [id])
   studentProfile   StudentProfile   @relation(fields: [studentProfileId], references: [id])
   payment          Payment?
@@ -236,6 +237,7 @@ model Payment {
   provider     PaymentProvider
   amountCents  Int             @map("amount_cents")
   status       PaymentStatus   @default(PENDING)
+  paidAt       DateTime?       @map("paid_at")
   createdAt    DateTime        @default(now()) @map("created_at")
   enrollment   Enrollment      @relation(fields: [enrollmentId], references: [id])
 
