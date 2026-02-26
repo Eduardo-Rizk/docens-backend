@@ -8,6 +8,8 @@ import { InstitutionsModule } from './institutions/institutions.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { TeachersModule } from './teachers/teachers.module';
 import { ClassEventsModule } from './class-events/class-events.module';
+import { TeacherProfileModule } from './teacher-profile/teacher-profile.module';
+import { TeacherModule } from './teacher/teacher.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -27,6 +29,8 @@ import { RolesGuard } from './auth/guards/roles.guard';
     SubjectsModule,
     TeachersModule,
     ClassEventsModule,
+    TeacherProfileModule,
+    TeacherModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
