@@ -58,84 +58,85 @@ export class AuthService {
     // 2. Create DB user + profile in a Prisma transaction
     // If Prisma fails, clean up Supabase Auth user (no ghost users)
     try {
-      const txResult = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const user = await tx.user.create({
-          data: {
-            supabaseId: authData.user.id,
-            name: dto.name,
-            email: dto.email,
-            phone: dto.phone,
-            role: dto.role,
-          },
-        });
-
-        if (dto.role === Role.STUDENT) {
-          const studentProfile = await tx.studentProfile.create({
+      const txResult = await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          const user = await tx.user.create({
             data: {
-              userId: user.id,
-              labels: dto.labels ?? [],
+              supabaseId: authData.user.id,
+              name: dto.name,
+              email: dto.email,
+              phone: dto.phone,
+              role: dto.role,
             },
           });
 
-          // Create student-institution junction rows
-          for (const institutionId of dto.institutionIds) {
-            await tx.studentInstitution.create({
+          if (dto.role === Role.STUDENT) {
+            const studentProfile = await tx.studentProfile.create({
               data: {
-                studentProfileId: studentProfile.id,
+                userId: user.id,
+                labels: dto.labels ?? [],
+              },
+            });
+
+            // Create student-institution junction rows
+            for (const institutionId of dto.institutionIds) {
+              await tx.studentInstitution.create({
+                data: {
+                  studentProfileId: studentProfile.id,
+                  institutionId,
+                },
+              });
+            }
+
+            return {
+              user,
+              studentProfile,
+              teacherProfile: null,
+            };
+          }
+
+          // TEACHER path
+          const teacherProfile = await tx.teacherProfile.create({
+            data: {
+              userId: user.id,
+              labels: dto.labels ?? [],
+              photoUrl: dto.photoUrl ?? null,
+            },
+          });
+
+          // Create teacher-institution junction rows
+          for (const institutionId of dto.institutionIds) {
+            await tx.teacherInstitution.create({
+              data: {
+                teacherProfileId: teacherProfile.id,
                 institutionId,
+              },
+            });
+          }
+
+          // Create teacher-subject junction rows
+          for (const subjectId of dto.subjectIds!) {
+            await tx.teacherSubject.create({
+              data: {
+                teacherProfileId: teacherProfile.id,
+                subjectId,
               },
             });
           }
 
           return {
             user,
-            studentProfile,
-            teacherProfile: null as null,
+            studentProfile: null,
+            teacherProfile,
           };
-        }
-
-        // TEACHER path
-        const teacherProfile = await tx.teacherProfile.create({
-          data: {
-            userId: user.id,
-            labels: dto.labels ?? [],
-            photoUrl: dto.photoUrl ?? null,
-          },
-        });
-
-        // Create teacher-institution junction rows
-        for (const institutionId of dto.institutionIds) {
-          await tx.teacherInstitution.create({
-            data: {
-              teacherProfileId: teacherProfile.id,
-              institutionId,
-            },
-          });
-        }
-
-        // Create teacher-subject junction rows
-        for (const subjectId of dto.subjectIds!) {
-          await tx.teacherSubject.create({
-            data: {
-              teacherProfileId: teacherProfile.id,
-              subjectId,
-            },
-          });
-        }
-
-        return {
-          user,
-          studentProfile: null as null,
-          teacherProfile,
-        };
-      });
+        },
+      );
 
       // 3. Get session token via sign-in
-      const { data: session } =
-        await this.supabase.auth.signInWithPassword({
-          email: dto.email,
-          password: dto.password,
-        });
+      const { data: session } = await this.supabase.auth.signInWithPassword({
+        email: dto.email,
+        password: dto.password,
+      });
 
       return {
         ...txResult,

@@ -109,7 +109,12 @@ export class InstitutionsService {
       {
         yearLabel: string;
         yearOrder: number;
-        subjects: { id: string; name: string; icon: string | null; teacherCount: number }[];
+        subjects: {
+          id: string;
+          name: string;
+          icon: string | null;
+          teacherCount: number;
+        }[];
       }
     >();
 

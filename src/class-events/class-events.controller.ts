@@ -36,8 +36,7 @@ export class ClassEventsController {
   @Roles(Role.TEACHER)
   @Post()
   create(@Body() dto: CreateClassEventDto, @Request() req: any) {
-    const teacherProfileId: string | undefined =
-      req.user.teacherProfile?.id;
+    const teacherProfileId: string | undefined = req.user.teacherProfile?.id;
     if (!teacherProfileId) {
       throw new BadRequestException({
         error: 'BAD_REQUEST',
@@ -54,8 +53,7 @@ export class ClassEventsController {
     @Body() dto: UpdateClassEventDto,
     @Request() req: any,
   ) {
-    const teacherProfileId: string | undefined =
-      req.user.teacherProfile?.id;
+    const teacherProfileId: string | undefined = req.user.teacherProfile?.id;
     if (!teacherProfileId) {
       throw new BadRequestException({
         error: 'BAD_REQUEST',
@@ -68,8 +66,7 @@ export class ClassEventsController {
   @Roles(Role.TEACHER)
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req: any) {
-    const teacherProfileId: string | undefined =
-      req.user.teacherProfile?.id;
+    const teacherProfileId: string | undefined = req.user.teacherProfile?.id;
     if (!teacherProfileId) {
       throw new BadRequestException({
         error: 'BAD_REQUEST',

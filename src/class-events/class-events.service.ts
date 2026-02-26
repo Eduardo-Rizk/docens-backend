@@ -110,8 +110,7 @@ export class ClassEventsService {
     }
 
     // 2. Reshape response to match spec
-    const { institution, subject, teacherProfile, ...classEventFields } =
-      event;
+    const { institution, subject, teacherProfile, ...classEventFields } = event;
 
     // 3. Compute seat info — capacity is always present (non-nullable in schema)
     const isSoldOut = classEventFields.soldSeats >= classEventFields.capacity;
@@ -265,8 +264,7 @@ export class ClassEventsService {
     if (action !== undefined && hasFieldEdits) {
       throw new UnprocessableEntityException({
         error: 'BUSINESS_RULE_VIOLATION',
-        message:
-          'Cannot combine action with field edits in a single request',
+        message: 'Cannot combine action with field edits in a single request',
       });
     }
 

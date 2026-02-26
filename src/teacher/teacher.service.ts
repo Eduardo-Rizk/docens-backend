@@ -35,12 +35,8 @@ export class TeacherService {
 
     // Group events by publicationStatus in-memory
     const drafts = events.filter((e) => e.publicationStatus === 'DRAFT');
-    const published = events.filter(
-      (e) => e.publicationStatus === 'PUBLISHED',
-    );
-    const finished = events.filter(
-      (e) => e.publicationStatus === 'FINISHED',
-    );
+    const published = events.filter((e) => e.publicationStatus === 'PUBLISHED');
+    const finished = events.filter((e) => e.publicationStatus === 'FINISHED');
 
     return { drafts, published, finished };
   }

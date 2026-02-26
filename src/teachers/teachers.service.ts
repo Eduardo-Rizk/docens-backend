@@ -6,10 +6,7 @@ import { CLASS_EVENT_PUBLIC_SELECT } from '../common/constants';
 export class TeachersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByInstitutionAndSubject(
-    institutionId: string,
-    subjectId: string,
-  ) {
+  async findByInstitutionAndSubject(institutionId: string, subjectId: string) {
     // 1. Verify institution exists
     const institution = await this.prisma.institution.findUnique({
       where: { id: institutionId },
@@ -99,8 +96,7 @@ export class TeachersService {
     const teachers = Array.from(teacherMap.values()).map((entry) => {
       const futurePublished = entry.events.filter(
         (e) =>
-          e.publicationStatus === 'PUBLISHED' &&
-          new Date(e.startsAt) > now,
+          e.publicationStatus === 'PUBLISHED' && new Date(e.startsAt) > now,
       );
 
       // Events are ordered by startsAt asc, so first future published is next

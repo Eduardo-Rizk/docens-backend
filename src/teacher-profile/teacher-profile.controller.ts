@@ -12,15 +12,10 @@ import { UpdateTeacherProfileDto } from './dto/update-teacher-profile.dto';
 @Controller('teacher-profile')
 @Roles(Role.TEACHER)
 export class TeacherProfileController {
-  constructor(
-    private readonly teacherProfileService: TeacherProfileService,
-  ) {}
+  constructor(private readonly teacherProfileService: TeacherProfileService) {}
 
   @Put()
-  async update(
-    @Body() dto: UpdateTeacherProfileDto,
-    @Request() req: any,
-  ) {
+  async update(@Body() dto: UpdateTeacherProfileDto, @Request() req: any) {
     const teacherProfileId = req.user.teacherProfile?.id;
 
     if (!teacherProfileId) {

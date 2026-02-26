@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Request,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Get, Request, BadRequestException } from '@nestjs/common';
 import { Roles, Role } from '../auth/decorators/roles.decorator';
 import { TeacherService } from './teacher.service';
 
@@ -14,8 +9,7 @@ export class TeacherController {
 
   @Get('class-events')
   findOwnClassEvents(@Request() req: any) {
-    const teacherProfileId: string | undefined =
-      req.user.teacherProfile?.id;
+    const teacherProfileId: string | undefined = req.user.teacherProfile?.id;
     if (!teacherProfileId) {
       throw new BadRequestException({
         error: 'BAD_REQUEST',
