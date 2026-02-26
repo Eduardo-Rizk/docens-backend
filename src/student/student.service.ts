@@ -34,7 +34,7 @@ function computeAccessState(
   return 'NEEDS_PURCHASE'; // CANCELLED, REFUNDED, or unknown
 }
 
-interface AgendaItem {
+export interface AgendaItem {
   enrollment: { id: string; status: string; createdAt: Date } | null;
   classEvent: {
     id: string;
