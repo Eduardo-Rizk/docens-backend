@@ -103,40 +103,26 @@ export class InstitutionsService {
       countMap.get(row.subjectId)!.add(row.teacherProfileId);
     }
 
-    // Group by yearLabel into yearLevels structure
-    const yearMap = new Map<
-      string,
-      {
-        yearLabel: string;
-        yearOrder: number;
-        subjects: {
-          id: string;
-          name: string;
-          icon: string | null;
-          teacherCount: number;
-        }[];
-      }
-    >();
+    // Return flat array matching frontend InstitutionSubject[] shape
+    // Deduplicate subjects (same subject can appear in multiple yearLabels)
+    const seen = new Set<string>();
+    const result: {
+      subjectId: string;
+      subjectName: string;
+      teacherCount: number;
+    }[] = [];
 
     for (const is of institutionSubjects) {
-      if (!yearMap.has(is.yearLabel)) {
-        yearMap.set(is.yearLabel, {
-          yearLabel: is.yearLabel,
-          yearOrder: is.yearOrder,
-          subjects: [],
+      if (!seen.has(is.subject.id)) {
+        seen.add(is.subject.id);
+        result.push({
+          subjectId: is.subject.id,
+          subjectName: is.subject.name,
+          teacherCount: countMap.get(is.subject.id)?.size ?? 0,
         });
       }
-      yearMap.get(is.yearLabel)!.subjects.push({
-        ...is.subject,
-        teacherCount: countMap.get(is.subject.id)?.size ?? 0,
-      });
     }
 
-    return {
-      institution,
-      yearLevels: Array.from(yearMap.values()).sort(
-        (a, b) => a.yearOrder - b.yearOrder,
-      ),
-    };
+    return result;
   }
 }
