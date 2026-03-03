@@ -30,15 +30,26 @@ export class EnrollmentsService {
       now.getTime() + ENROLLMENT_EXPIRATION_MINUTES * 60 * 1000,
     );
 
-    // 1. Verify class event exists and is PUBLISHED
-    const classEvent = await this.prisma.classEvent.findFirst({
-      where: { id: dto.classEventId, publicationStatus: 'PUBLISHED' },
+    // 1. Verify class event exists
+    const classEvent = await this.prisma.classEvent.findUnique({
+      where: { id: dto.classEventId },
     });
 
     if (!classEvent) {
       throw new NotFoundException({
         error: 'NOT_FOUND',
-        message: 'Class event not found or not published',
+        message: 'Class event not found',
+      });
+    }
+
+    // 2. Must be PUBLISHED to accept enrollments
+    if (classEvent.publicationStatus !== 'PUBLISHED') {
+      throw new UnprocessableEntityException({
+        error: 'BUSINESS_RULE_VIOLATION',
+        message:
+          classEvent.publicationStatus === 'FINISHED'
+            ? 'This class event has already finished'
+            : 'Class event is not published',
       });
     }
 
