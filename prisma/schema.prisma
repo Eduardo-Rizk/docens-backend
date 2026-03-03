@@ -211,6 +211,9 @@ model ClassEvent {
   @@index([subjectId])
   @@index([teacherProfileId])
   @@index([publicationStatus])
+  @@index([institutionId, publicationStatus])
+  @@index([teacherProfileId, startsAt])
+  @@index([publicationStatus, startsAt])
   @@map("class_events")
 }
 
@@ -228,6 +231,7 @@ model Enrollment {
   @@unique([classEventId, studentProfileId])
   @@index([classEventId])
   @@index([studentProfileId])
+  @@index([studentProfileId, status])
   @@map("enrollments")
 }
 
