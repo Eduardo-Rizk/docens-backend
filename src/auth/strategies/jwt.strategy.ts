@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { passportJwtSecret } from 'jwks-rsa';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -10,11 +11,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     configService: ConfigService,
     private prisma: PrismaService,
   ) {
+    const supabaseUrl = configService.getOrThrow<string>('SUPABASE_URL');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      // CRITICAL: Use SUPABASE_JWT_SECRET, not SUPABASE_ANON_KEY
-      secretOrKey: configService.getOrThrow<string>('SUPABASE_JWT_SECRET'),
+      // Use JWKS endpoint for ES256 token verification
+      secretOrKeyProvider: passportJwtSecret({
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 10,
+        jwksUri: `${supabaseUrl}/auth/v1/.well-known/jwks.json`,
+      }),
+      algorithms: ['ES256'],
     });
   }
 
