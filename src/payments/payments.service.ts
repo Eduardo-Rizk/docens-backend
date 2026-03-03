@@ -86,7 +86,7 @@ export class PaymentsService {
       });
 
       // Post-check: rollback if capacity overflow (race-safe)
-      if (classEvent.soldSeats > classEvent.capacity) {
+      if (classEvent.capacity !== null && classEvent.soldSeats > classEvent.capacity) {
         throw new UnprocessableEntityException({
           error: 'BUSINESS_RULE_VIOLATION',
           message: 'Class event is full',

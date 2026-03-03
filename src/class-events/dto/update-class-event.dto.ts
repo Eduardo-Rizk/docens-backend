@@ -60,7 +60,7 @@ export class UpdateClassEventDto {
   @IsInt()
   @Min(1)
   @Max(500)
-  capacity?: number;
+  capacity?: number | null;
 
   @IsOptional()
   @IsString()

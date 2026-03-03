@@ -112,9 +112,15 @@ export class ClassEventsService {
     // 2. Reshape response to match spec
     const { institution, subject, teacherProfile, ...classEventFields } = event;
 
-    // 3. Compute seat info — capacity is always present (non-nullable in schema)
-    const isSoldOut = classEventFields.soldSeats >= classEventFields.capacity;
-    const spotsLeft = classEventFields.capacity - classEventFields.soldSeats;
+    // 3. Compute seat info — capacity null means unlimited
+    const isSoldOut =
+      classEventFields.capacity !== null
+        ? classEventFields.soldSeats >= classEventFields.capacity
+        : false;
+    const spotsLeft =
+      classEventFields.capacity !== null
+        ? classEventFields.capacity - classEventFields.soldSeats
+        : null;
 
     return {
       classEvent: {
@@ -203,7 +209,7 @@ export class ClassEventsService {
         startsAt,
         durationMin: dto.durationMin,
         priceCents: dto.priceCents,
-        capacity: dto.capacity,
+        capacity: dto.capacity ?? null,
         meetingUrl: dto.meetingUrl ?? null,
         // publicationStatus defaults to DRAFT
         // meetingStatus defaults to LOCKED

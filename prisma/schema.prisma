@@ -196,7 +196,7 @@ model ClassEvent {
   startsAt          DateTime          @map("starts_at")
   durationMin       Int               @map("duration_min")
   priceCents        Int               @map("price_cents")
-  capacity          Int
+  capacity          Int?
   soldSeats         Int               @default(0) @map("sold_seats")
   publicationStatus PublicationStatus @default(DRAFT) @map("publication_status")
   meetingStatus     MeetingStatus     @default(LOCKED) @map("meeting_status")

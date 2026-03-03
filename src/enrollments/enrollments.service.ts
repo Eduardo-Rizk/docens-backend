@@ -50,7 +50,7 @@ export class EnrollmentsService {
       },
     });
 
-    if (activeCount >= classEvent.capacity) {
+    if (classEvent.capacity !== null && activeCount >= classEvent.capacity) {
       throw new UnprocessableEntityException({
         error: 'BUSINESS_RULE_VIOLATION',
         message: 'Class event is full',

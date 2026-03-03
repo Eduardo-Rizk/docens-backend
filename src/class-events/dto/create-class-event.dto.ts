@@ -42,10 +42,11 @@ export class CreateClassEventDto {
   @Min(0)
   priceCents: number;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(500)
-  capacity: number;
+  capacity?: number | null;
 
   @IsOptional()
   @IsUrl()

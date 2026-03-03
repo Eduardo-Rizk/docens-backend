@@ -213,7 +213,7 @@ export class TeachersService {
       (e) =>
         e.publicationStatus === 'PUBLISHED' &&
         new Date(e.startsAt) > now &&
-        e.soldSeats < e.capacity,
+        (e.capacity === null || e.soldSeats < e.capacity),
     ).length;
 
     const stats = {

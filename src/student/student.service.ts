@@ -43,7 +43,7 @@ export interface AgendaItem {
     startsAt: Date;
     durationMin: number;
     priceCents: number;
-    capacity: number;
+    capacity: number | null;
     soldSeats: number;
     publicationStatus: string;
     meetingStatus: string;
