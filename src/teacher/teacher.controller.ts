@@ -37,6 +37,21 @@ export class TeacherController {
     return this.teacherService.getDashboard(teacherProfileId);
   }
 
+  @Get('class-events/:classEventId')
+  findOwnClassEvent(
+    @Request() req: any,
+    @Param('classEventId') classEventId: string,
+  ) {
+    const teacherProfileId: string | undefined = req.user.teacherProfile?.id;
+    if (!teacherProfileId) {
+      throw new BadRequestException({
+        error: 'BAD_REQUEST',
+        message: 'Teacher profile not found for this user',
+      });
+    }
+    return this.teacherService.findOwnClassEvent(teacherProfileId, classEventId);
+  }
+
   @Get('class-events/:classEventId/buyers')
   getBuyers(
     @Request() req: any,

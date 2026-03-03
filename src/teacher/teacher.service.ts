@@ -107,6 +107,53 @@ export class TeacherService {
   }
 
   /**
+   * Find a single class event owned by this teacher (any status, including DRAFT).
+   */
+  async findOwnClassEvent(teacherProfileId: string, classEventId: string) {
+    const event = await this.prisma.classEvent.findFirst({
+      where: { id: classEventId, teacherProfileId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        startsAt: true,
+        durationMin: true,
+        priceCents: true,
+        capacity: true,
+        soldSeats: true,
+        publicationStatus: true,
+        meetingStatus: true,
+        meetingUrl: true,
+        createdAt: true,
+        institution: { select: { id: true, name: true, shortName: true } },
+        subject: { select: { id: true, name: true, icon: true } },
+      },
+    });
+    if (!event) {
+      throw new NotFoundException({
+        error: 'NOT_FOUND',
+        message: 'Class event not found or not owned by teacher',
+      });
+    }
+
+    const { institution, subject, ...classEventFields } = event;
+    const isSoldOut =
+      classEventFields.capacity !== null
+        ? classEventFields.soldSeats >= classEventFields.capacity
+        : false;
+    const spotsLeft =
+      classEventFields.capacity !== null
+        ? classEventFields.capacity - classEventFields.soldSeats
+        : null;
+
+    return {
+      classEvent: { ...classEventFields, isSoldOut, spotsLeft },
+      institution,
+      subject,
+    };
+  }
+
+  /**
    * Buyer list for a teacher's class event.
    * Verifies ownership before returning enrolled students.
    */
