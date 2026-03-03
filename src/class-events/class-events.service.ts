@@ -291,7 +291,7 @@ export class ClassEventsService {
         throw new UnprocessableEntityException({
           error: 'BUSINESS_RULE_VIOLATION',
           message:
-            'Cannot edit core fields after publishing. Only description and meetingUrl can be changed.',
+            'Cannot edit core fields after publishing. Only title, description and meetingUrl can be changed.',
         });
       }
     }

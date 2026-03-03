@@ -53,9 +53,10 @@ export const BROWSE_PUBLICATION_FILTER = {
 /**
  * Core fields locked after PUBLISHED — students purchase based on these.
  * Editing these on a PUBLISHED event would invalidate existing enrollments.
+ * Note: title, description and meetingUrl are intentionally NOT locked —
+ * teachers can update these at any time before FINISHED.
  */
 export const CORE_FIELDS = [
-  'title',
   'subjectId',
   'institutionId',
   'startsAt',
