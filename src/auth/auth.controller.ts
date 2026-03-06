@@ -3,6 +3,8 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyRecoveryDto } from './dto/verify-recovery.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 import { Public } from './decorators/public.decorator';
 
 @Controller('auth')
@@ -25,6 +27,17 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.email);
+  }
+
+  @Public()
+  @Post('verify-recovery')
+  verifyRecovery(@Body() dto: VerifyRecoveryDto) {
+    return this.authService.verifyRecovery(dto.tokenHash, dto.type);
+  }
+
+  @Post('update-password')
+  updatePassword(@Request() req: any, @Body() dto: UpdatePasswordDto) {
+    return this.authService.updatePassword(req.user.supabaseId, dto.password);
   }
 
   @Get('me')

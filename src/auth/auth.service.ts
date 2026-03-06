@@ -45,7 +45,7 @@ export class AuthService {
         email: dto.email,
         password: dto.password,
         user_metadata: { role: dto.role, name: dto.name },
-        email_confirm: true,
+        email_confirm: false,
       });
 
     if (authError) {
@@ -132,15 +132,9 @@ export class AuthService {
         },
       );
 
-      // 3. Get session token via sign-in
-      const { data: session } = await this.supabase.auth.signInWithPassword({
-        email: dto.email,
-        password: dto.password,
-      });
-
       return {
-        ...txResult,
-        token: session.session?.access_token,
+        message: 'Account created. Please verify your email.',
+        user: txResult.user,
       };
     } catch (err) {
       // Clean up Supabase Auth user on Prisma failure
@@ -199,6 +193,52 @@ export class AuthService {
       });
     }
     return { message: 'Password reset email sent' };
+  }
+
+  async verifyRecovery(tokenHash: string, type: string) {
+    const { data, error } = await this.supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type as 'recovery',
+    });
+
+    if (error || !data.session) {
+      throw new BadRequestException({
+        error: 'BAD_REQUEST',
+        message: error?.message ?? 'Invalid or expired recovery token',
+      });
+    }
+
+    const dbUser = await this.prisma.user.findUnique({
+      where: { supabaseId: data.user!.id },
+    });
+
+    if (!dbUser) {
+      throw new NotFoundException({
+        error: 'NOT_FOUND',
+        message: 'User not found in database',
+      });
+    }
+
+    return {
+      token: data.session.access_token,
+      user: dbUser,
+    };
+  }
+
+  async updatePassword(supabaseId: string, newPassword: string) {
+    const { error } = await this.supabase.auth.admin.updateUserById(
+      supabaseId,
+      { password: newPassword },
+    );
+
+    if (error) {
+      throw new BadRequestException({
+        error: 'BAD_REQUEST',
+        message: error.message,
+      });
+    }
+
+    return { message: 'Password updated successfully' };
   }
 
   async getMe(userId: string) {
