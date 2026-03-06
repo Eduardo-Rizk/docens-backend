@@ -156,27 +156,19 @@ export class ClassEventsService {
   ): Promise<boolean> {
     const endAt = new Date(startsAt.getTime() + durationMin * 60 * 1000);
 
-    const where: Prisma.ClassEventWhereInput = {
-      teacherProfileId,
-      startsAt: { lt: endAt }, // existing event starts before new event ends
-    };
+    // Use raw SQL to do the full overlap check in a single DB query
+    // instead of fetching candidates and filtering in JS.
+    // Overlap condition: existing.startsAt < newEnd AND existingEnd > newStart
+    // where existingEnd = existing.startsAt + existing.durationMin * interval '1 minute'
+    const count = await this.prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count FROM class_events
+      WHERE teacher_profile_id = ${teacherProfileId}::uuid
+        AND starts_at < ${endAt}
+        AND (starts_at + (duration_min * interval '1 minute')) > ${startsAt}
+        ${excludeEventId ? Prisma.sql`AND id != ${excludeEventId}::uuid` : Prisma.empty}
+    `;
 
-    if (excludeEventId) {
-      where.id = { not: excludeEventId };
-    }
-
-    const candidates = await this.prisma.classEvent.findMany({
-      where,
-      select: { id: true, startsAt: true, durationMin: true },
-    });
-
-    // Check if existing event's end > new event's start (strict > for back-to-back allowance)
-    return candidates.some((event) => {
-      const existingEnd = new Date(
-        event.startsAt.getTime() + event.durationMin * 60 * 1000,
-      );
-      return existingEnd > startsAt;
-    });
+    return Number(count[0].count) > 0;
   }
 
   /**

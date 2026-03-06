@@ -7,11 +7,38 @@ export class TeachersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findByInstitutionAndSubject(institutionId: string, subjectId: string) {
-    // 1. Verify institution exists
-    const institution = await this.prisma.institution.findUnique({
-      where: { id: institutionId },
-      select: { id: true, shortName: true },
-    });
+    // Parallelize all 3 queries to reduce round-trips
+    const [institution, subject, events] = await Promise.all([
+      this.prisma.institution.findUnique({
+        where: { id: institutionId },
+        select: { id: true, shortName: true },
+      }),
+      this.prisma.subject.findUnique({
+        where: { id: subjectId },
+        select: { id: true, name: true, icon: true },
+      }),
+      this.prisma.classEvent.findMany({
+        where: {
+          institutionId,
+          subjectId,
+          publicationStatus: { in: ['PUBLISHED', 'FINISHED'] },
+        },
+        select: {
+          ...CLASS_EVENT_PUBLIC_SELECT,
+          teacherProfile: {
+            select: {
+              id: true,
+              photo: true,
+              headline: true,
+              bio: true,
+              isVerified: true,
+              user: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { startsAt: 'asc' },
+      }),
+    ]);
 
     if (!institution) {
       throw new NotFoundException({
@@ -20,41 +47,12 @@ export class TeachersService {
       });
     }
 
-    // 2. Verify subject exists
-    const subject = await this.prisma.subject.findUnique({
-      where: { id: subjectId },
-      select: { id: true, name: true, icon: true },
-    });
-
     if (!subject) {
       throw new NotFoundException({
         error: 'NOT_FOUND',
         message: 'Subject not found',
       });
     }
-
-    // 3. Find all PUBLISHED+FINISHED ClassEvents for this institution+subject
-    const events = await this.prisma.classEvent.findMany({
-      where: {
-        institutionId,
-        subjectId,
-        publicationStatus: { in: ['PUBLISHED', 'FINISHED'] },
-      },
-      select: {
-        ...CLASS_EVENT_PUBLIC_SELECT,
-        teacherProfile: {
-          select: {
-            id: true,
-            photo: true,
-            headline: true,
-            bio: true,
-            isVerified: true,
-            user: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { startsAt: 'asc' },
-    });
 
     // 4. Group events by teacherProfileId
     const teacherMap = new Map<
@@ -137,18 +135,36 @@ export class TeachersService {
   }
 
   async findOne(institutionId: string, teacherProfileId: string) {
-    // 1. Verify teacher profile exists
-    const teacherProfile = await this.prisma.teacherProfile.findUnique({
-      where: { id: teacherProfileId },
-      select: {
-        id: true,
-        photo: true,
-        headline: true,
-        bio: true,
-        isVerified: true,
-        user: { select: { name: true } },
-      },
-    });
+    // Parallelize all 3 queries to reduce round-trips
+    const [teacherProfile, institution, events] = await Promise.all([
+      this.prisma.teacherProfile.findUnique({
+        where: { id: teacherProfileId },
+        select: {
+          id: true,
+          photo: true,
+          headline: true,
+          bio: true,
+          isVerified: true,
+          user: { select: { name: true } },
+        },
+      }),
+      this.prisma.institution.findUnique({
+        where: { id: institutionId },
+        select: { id: true, name: true, shortName: true },
+      }),
+      this.prisma.classEvent.findMany({
+        where: {
+          teacherProfileId,
+          institutionId,
+          publicationStatus: { in: ['PUBLISHED', 'FINISHED'] },
+        },
+        select: {
+          ...CLASS_EVENT_PUBLIC_SELECT,
+          subject: { select: { id: true, name: true, icon: true } },
+        },
+        orderBy: { startsAt: 'asc' },
+      }),
+    ]);
 
     if (!teacherProfile) {
       throw new NotFoundException({
@@ -157,32 +173,12 @@ export class TeachersService {
       });
     }
 
-    // 2. Verify institution exists
-    const institution = await this.prisma.institution.findUnique({
-      where: { id: institutionId },
-      select: { id: true, name: true, shortName: true },
-    });
-
     if (!institution) {
       throw new NotFoundException({
         error: 'NOT_FOUND',
         message: 'Institution not found',
       });
     }
-
-    // 3. Get all PUBLISHED+FINISHED ClassEvents for this teacher at this institution
-    const events = await this.prisma.classEvent.findMany({
-      where: {
-        teacherProfileId,
-        institutionId,
-        publicationStatus: { in: ['PUBLISHED', 'FINISHED'] },
-      },
-      select: {
-        ...CLASS_EVENT_PUBLIC_SELECT,
-        subject: { select: { id: true, name: true, icon: true } },
-      },
-      orderBy: { startsAt: 'asc' },
-    });
 
     // 4. Group events by subjectId into classesBySubject
     const subjectMap = new Map<

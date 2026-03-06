@@ -60,11 +60,29 @@ export class InstitutionsService {
   }
 
   async findSubjects(institutionId: string) {
-    // Verify institution exists
-    const institution = await this.prisma.institution.findUnique({
-      where: { id: institutionId },
-      select: { id: true, name: true, shortName: true, type: true },
-    });
+    // Parallelize all 3 queries to reduce round-trips
+    const [institution, institutionSubjects, teacherCounts] = await Promise.all([
+      this.prisma.institution.findUnique({
+        where: { id: institutionId },
+        select: { id: true, name: true, shortName: true, type: true },
+      }),
+      this.prisma.institutionSubject.findMany({
+        where: { institutionId },
+        select: {
+          yearLabel: true,
+          yearOrder: true,
+          subject: { select: { id: true, name: true, icon: true } },
+        },
+        orderBy: [{ yearOrder: 'asc' }, { subject: { name: 'asc' } }],
+      }),
+      this.prisma.classEvent.groupBy({
+        by: ['subjectId', 'teacherProfileId'],
+        where: {
+          institutionId,
+          publicationStatus: { in: ['PUBLISHED', 'FINISHED'] },
+        },
+      }),
+    ]);
 
     if (!institution) {
       throw new NotFoundException({
@@ -72,27 +90,6 @@ export class InstitutionsService {
         message: 'Institution not found',
       });
     }
-
-    // Fetch institution subjects with nested subject data
-    const institutionSubjects = await this.prisma.institutionSubject.findMany({
-      where: { institutionId },
-      select: {
-        yearLabel: true,
-        yearOrder: true,
-        subject: { select: { id: true, name: true, icon: true } },
-      },
-      orderBy: [{ yearOrder: 'asc' }, { subject: { name: 'asc' } }],
-    });
-
-    // Compute teacherCount per subject from ClassEvent (not junction tables)
-    // Count distinct teacherProfileId per subjectId for PUBLISHED/FINISHED events
-    const teacherCounts = await this.prisma.classEvent.groupBy({
-      by: ['subjectId', 'teacherProfileId'],
-      where: {
-        institutionId,
-        publicationStatus: { in: ['PUBLISHED', 'FINISHED'] },
-      },
-    });
 
     // Build map: subjectId -> Set<teacherProfileId>
     const countMap = new Map<string, Set<string>>();

@@ -158,6 +158,7 @@ export class TeacherService {
    * Verifies ownership before returning enrolled students.
    */
   async getBuyers(teacherProfileId: string, classEventId: string) {
+    // Single query: fetch class event with enrollments included
     const classEvent = await this.prisma.classEvent.findFirst({
       where: { id: classEventId, teacherProfileId },
       select: {
@@ -166,6 +167,23 @@ export class TeacherService {
         startsAt: true,
         institution: { select: { shortName: true } },
         subject: { select: { name: true } },
+        enrollments: {
+          select: {
+            id: true,
+            status: true,
+            studentProfile: {
+              select: { user: { select: { name: true, email: true } } },
+            },
+            payment: {
+              select: {
+                amountCents: true,
+                provider: true,
+                status: true,
+                paidAt: true,
+              },
+            },
+          },
+        },
       },
     });
     if (!classEvent) {
@@ -175,27 +193,8 @@ export class TeacherService {
       });
     }
 
-    const enrollments = await this.prisma.enrollment.findMany({
-      where: { classEventId },
-      select: {
-        id: true,
-        status: true,
-        studentProfile: {
-          select: { user: { select: { name: true, email: true } } },
-        },
-        payment: {
-          select: {
-            amountCents: true,
-            provider: true,
-            status: true,
-            paidAt: true,
-          },
-        },
-      },
-    });
-
-    const paidCount = enrollments.filter((e) => e.status === 'PAID').length;
-    const buyers = enrollments.map((e) => ({
+    const paidCount = classEvent.enrollments.filter((e) => e.status === 'PAID').length;
+    const buyers = classEvent.enrollments.map((e) => ({
       enrollment: { id: e.id, status: e.status },
       user: {
         name: e.studentProfile.user.name,

@@ -71,28 +71,34 @@ export class StudentService {
   async getAgenda(studentProfileId: string) {
     const now = new Date();
 
-    // 1. Query active enrollments with class event details
-    const enrollments = await this.prisma.enrollment.findMany({
-      where: {
-        studentProfileId,
-        ...activeEnrollmentWhere(now),
-      },
-      include: {
-        classEvent: {
-          include: {
-            institution: { select: { id: true, shortName: true } },
-            teacherProfile: {
-              select: {
-                id: true,
-                headline: true,
-                user: { select: { name: true } },
+    // 1. Parallelize enrollments + studentInstitutions queries
+    const [enrollments, studentInstitutions] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where: {
+          studentProfileId,
+          ...activeEnrollmentWhere(now),
+        },
+        include: {
+          classEvent: {
+            include: {
+              institution: { select: { id: true, shortName: true } },
+              teacherProfile: {
+                select: {
+                  id: true,
+                  headline: true,
+                  user: { select: { name: true } },
+                },
               },
+              subject: { select: { id: true, name: true } },
             },
-            subject: { select: { id: true, name: true } },
           },
         },
-      },
-    });
+      }),
+      this.prisma.studentInstitution.findMany({
+        where: { studentProfileId },
+        select: { institutionId: true },
+      }),
+    ]);
 
     // 2. Map enrolled items to agenda items with accessState and time classification
     const enrolledItems: (AgendaItem & { startsAt: Date; endsAt: Date })[] =
@@ -142,11 +148,6 @@ export class StudentService {
 
     // 3. Query discoverable events from the student's institutions
     //    (PUBLISHED events they haven't enrolled in yet, starting in the future)
-    const studentInstitutions = await this.prisma.studentInstitution.findMany({
-      where: { studentProfileId },
-      select: { institutionId: true },
-    });
-
     const institutionIds = studentInstitutions.map((si) => si.institutionId);
 
     // Get IDs of class events the student already has an active enrollment for

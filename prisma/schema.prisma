@@ -232,6 +232,7 @@ model Enrollment {
   @@index([classEventId])
   @@index([studentProfileId])
   @@index([studentProfileId, status])
+  @@index([classEventId, status])
   @@map("enrollments")
 }
 
@@ -246,5 +247,6 @@ model Payment {
   enrollment   Enrollment      @relation(fields: [enrollmentId], references: [id])
 
   @@index([enrollmentId])
+  @@index([status])
   @@map("payments")
 }

@@ -78,13 +78,13 @@ export class AuthService {
               },
             });
 
-            // Create student-institution junction rows
-            for (const institutionId of dto.institutionIds) {
-              await tx.studentInstitution.create({
-                data: {
+            // Create student-institution junction rows (batch)
+            if (dto.institutionIds.length > 0) {
+              await tx.studentInstitution.createMany({
+                data: dto.institutionIds.map((institutionId) => ({
                   studentProfileId: studentProfile.id,
                   institutionId,
-                },
+                })),
               });
             }
 
@@ -104,23 +104,23 @@ export class AuthService {
             },
           });
 
-          // Create teacher-institution junction rows
-          for (const institutionId of dto.institutionIds) {
-            await tx.teacherInstitution.create({
-              data: {
+          // Create teacher-institution junction rows (batch)
+          if (dto.institutionIds.length > 0) {
+            await tx.teacherInstitution.createMany({
+              data: dto.institutionIds.map((institutionId) => ({
                 teacherProfileId: teacherProfile.id,
                 institutionId,
-              },
+              })),
             });
           }
 
-          // Create teacher-subject junction rows
-          for (const subjectId of dto.subjectIds!) {
-            await tx.teacherSubject.create({
-              data: {
+          // Create teacher-subject junction rows (batch)
+          if (dto.subjectIds!.length > 0) {
+            await tx.teacherSubject.createMany({
+              data: dto.subjectIds!.map((subjectId) => ({
                 teacherProfileId: teacherProfile.id,
                 subjectId,
-              },
+              })),
             });
           }
 
@@ -157,12 +157,17 @@ export class AuthService {
       });
     }
 
-    // 2. Fetch user + profile from DB
+    // 2. Fetch user + profile from DB (select only needed fields)
     const dbUser = await this.prisma.user.findUnique({
       where: { supabaseId: data.user.id },
-      include: {
-        studentProfile: true,
-        teacherProfile: true,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        studentProfile: { select: { id: true } },
+        teacherProfile: { select: { id: true } },
       },
     });
 
@@ -247,13 +252,13 @@ export class AuthService {
       include: {
         studentProfile: {
           include: {
-            institutions: true,
+            institutions: { select: { institutionId: true } },
           },
         },
         teacherProfile: {
           include: {
-            institutions: true,
-            subjects: true,
+            institutions: { select: { institutionId: true } },
+            subjects: { select: { subjectId: true } },
           },
         },
       },
