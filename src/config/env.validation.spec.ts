@@ -5,9 +5,9 @@ describe('envValidationSchema', () => {
     DATABASE_URL: 'postgres://user:pass@host:6543/db',
     DIRECT_URL: 'postgres://user:pass@host:5432/db',
     SUPABASE_URL: 'https://project.supabase.co',
-    SUPABASE_ANON_KEY: 'anon-key',
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
-    SUPABASE_JWT_SECRET: 'jwt-secret',
+    CLERK_SECRET_KEY: 'sk_test_abc123',
+    CLERK_JWKS_URI: 'https://example.clerk.accounts.dev/.well-known/jwks.json',
     PORT: 3001,
     NODE_ENV: 'test',
   };
@@ -29,14 +29,24 @@ describe('envValidationSchema', () => {
     expect(error!.message).toContain('DATABASE_URL');
   });
 
-  it('rejects missing SUPABASE_JWT_SECRET', () => {
-    const { SUPABASE_JWT_SECRET, ...rest } = validEnv;
+  it('rejects missing CLERK_SECRET_KEY', () => {
+    const { CLERK_SECRET_KEY, ...rest } = validEnv;
     const { error } = envValidationSchema.validate(rest, {
       allowUnknown: true,
       abortEarly: false,
     });
     expect(error).toBeDefined();
-    expect(error!.message).toContain('SUPABASE_JWT_SECRET');
+    expect(error!.message).toContain('CLERK_SECRET_KEY');
+  });
+
+  it('rejects missing CLERK_JWKS_URI', () => {
+    const { CLERK_JWKS_URI, ...rest } = validEnv;
+    const { error } = envValidationSchema.validate(rest, {
+      allowUnknown: true,
+      abortEarly: false,
+    });
+    expect(error).toBeDefined();
+    expect(error!.message).toContain('CLERK_JWKS_URI');
   });
 
   it('defaults PORT to 3001 when not provided', () => {

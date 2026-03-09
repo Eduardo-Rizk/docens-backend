@@ -15,20 +15,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     configService: ConfigService,
     private prisma: PrismaService,
   ) {
-    const supabaseUrl = configService.getOrThrow<string>('SUPABASE_URL');
+    const jwksUri = configService.getOrThrow<string>('CLERK_JWKS_URI');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      // Use JWKS endpoint for ES256 token verification
       secretOrKeyProvider: passportJwtSecret({
         cache: true,
-        cacheMaxAge: 86_400_000, // 24 hours (default: 10 min)
+        cacheMaxAge: 86_400_000,
         cacheMaxEntries: 5,
         rateLimit: true,
-        jwksRequestsPerMinute: 2, // Keys rarely rotate
-        jwksUri: `${supabaseUrl}/auth/v1/.well-known/jwks.json`,
+        jwksRequestsPerMinute: 2,
+        jwksUri,
       }),
-      algorithms: ['ES256'],
+      algorithms: ['RS256'],
     });
   }
 
@@ -38,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (cached && cached.expiresAt > now) return cached.user;
 
     const user = await this.prisma.user.findUnique({
-      where: { supabaseId: payload.sub },
+      where: { clerkId: payload.sub },
       include: {
         teacherProfile: { select: { id: true } },
         studentProfile: { select: { id: true } },
@@ -51,7 +50,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       });
     }
 
-    // Evict oldest entry if cache is full
     if (this.userCache.size >= JwtStrategy.CACHE_MAX) {
       const firstKey = this.userCache.keys().next().value;
       if (firstKey) this.userCache.delete(firstKey);

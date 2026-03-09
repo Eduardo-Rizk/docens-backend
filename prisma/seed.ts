@@ -792,7 +792,7 @@ for (const { courseKey, subjects: courseSubs } of ALL_COURSE_SUBJECTS) {
 const users = [
   {
     id: USER_IDS.Rafael,
-    supabaseId: 'fake-supabase-rafael',
+    clerkId: 'fake-clerk-rafael',
     name: 'Rafael Prado',
     email: 'rafael@docens.test',
     phone: '+55 11 99999-0001',
@@ -800,7 +800,7 @@ const users = [
   },
   {
     id: USER_IDS.Luiza,
-    supabaseId: 'fake-supabase-luiza',
+    clerkId: 'fake-clerk-luiza',
     name: 'Luiza Costa',
     email: 'luiza@docens.test',
     phone: '+55 11 99999-0002',
@@ -808,7 +808,7 @@ const users = [
   },
   {
     id: USER_IDS.Carlos,
-    supabaseId: 'fake-supabase-carlos',
+    clerkId: 'fake-clerk-carlos',
     name: 'Carlos Mendes',
     email: 'carlos@docens.test',
     phone: '+55 11 99999-0003',
@@ -816,7 +816,7 @@ const users = [
   },
   {
     id: USER_IDS.Mariana,
-    supabaseId: 'fake-supabase-mariana',
+    clerkId: 'fake-clerk-mariana',
     name: 'Mariana Silva',
     email: 'mariana@docens.test',
     phone: '+55 11 99999-0004',
@@ -1035,7 +1035,7 @@ const classEvents = [
 const studentUsers = [
   {
     id: STUDENT_USER_IDS.Ana,
-    supabaseId: 'fake-supabase-ana',
+    clerkId: 'fake-clerk-ana',
     name: 'Ana Silva',
     email: 'ana@docens.test',
     phone: '+55 11 98888-0001',
@@ -1043,7 +1043,7 @@ const studentUsers = [
   },
   {
     id: STUDENT_USER_IDS.CarlosAluno,
-    supabaseId: 'fake-supabase-carlos-aluno',
+    clerkId: 'fake-clerk-carlos-aluno',
     name: 'Carlos Aluno Mendes',
     email: 'carlos.aluno@docens.test',
     phone: '+55 11 98888-0002',
@@ -1051,7 +1051,7 @@ const studentUsers = [
   },
   {
     id: STUDENT_USER_IDS.Beatriz,
-    supabaseId: 'fake-supabase-beatriz',
+    clerkId: 'fake-clerk-beatriz',
     name: 'Beatriz Santos',
     email: 'beatriz@docens.test',
     phone: '+55 11 98888-0003',

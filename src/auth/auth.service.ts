@@ -2,33 +2,30 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClerkClient } from '@clerk/backend';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import { Role } from './decorators/roles.decorator';
 
 @Injectable()
 export class AuthService {
-  private readonly supabase: SupabaseClient;
+  private readonly clerk: ReturnType<typeof createClerkClient>;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    this.supabase = createClient(
-      this.configService.getOrThrow<string>('SUPABASE_URL'),
-      this.configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'),
-    );
+    this.clerk = createClerkClient({
+      secretKey: this.configService.getOrThrow<string>('CLERK_SECRET_KEY'),
+    });
   }
 
   async register(dto: RegisterDto) {
-    // Validate teacher-specific requirements
     if (
       dto.role === Role.TEACHER &&
       (!dto.subjectIds || dto.subjectIds.length === 0)
@@ -39,30 +36,36 @@ export class AuthService {
       });
     }
 
-    // 1. Create Supabase Auth user
-    const { data: authData, error: authError } =
-      await this.supabase.auth.admin.createUser({
-        email: dto.email,
+    // 1. Create Clerk user
+    let clerkUser: { id: string };
+    try {
+      clerkUser = await this.clerk.users.createUser({
+        emailAddress: [dto.email],
         password: dto.password,
-        user_metadata: { role: dto.role, name: dto.name },
-        email_confirm: false,
+        firstName: dto.name.split(' ')[0],
+        lastName: dto.name.split(' ').slice(1).join(' ') || undefined,
+        publicMetadata: { role: dto.role },
       });
-
-    if (authError) {
-      throw new ConflictException({
-        error: 'CONFLICT',
-        message: authError.message,
+    } catch (err: any) {
+      if (err?.errors?.[0]?.code === 'form_identifier_exists') {
+        throw new ConflictException({
+          error: 'CONFLICT',
+          message: 'Email already registered',
+        });
+      }
+      throw new InternalServerErrorException({
+        error: 'AUTH_ERROR',
+        message: err?.errors?.[0]?.message ?? 'Failed to create auth user',
       });
     }
 
     // 2. Create DB user + profile in a Prisma transaction
-    // If Prisma fails, clean up Supabase Auth user (no ghost users)
     try {
       const txResult = await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
           const user = await tx.user.create({
             data: {
-              supabaseId: authData.user.id,
+              clerkId: clerkUser.id,
               name: dto.name,
               email: dto.email,
               phone: dto.phone,
@@ -78,7 +81,6 @@ export class AuthService {
               },
             });
 
-            // Create student-institution junction rows (batch)
             if (dto.institutionIds.length > 0) {
               await tx.studentInstitution.createMany({
                 data: dto.institutionIds.map((institutionId) => ({
@@ -104,7 +106,6 @@ export class AuthService {
             },
           });
 
-          // Create teacher-institution junction rows (batch)
           if (dto.institutionIds.length > 0) {
             await tx.teacherInstitution.createMany({
               data: dto.institutionIds.map((institutionId) => ({
@@ -114,7 +115,6 @@ export class AuthService {
             });
           }
 
-          // Create teacher-subject junction rows (batch)
           if (dto.subjectIds!.length > 0) {
             await tx.teacherSubject.createMany({
               data: dto.subjectIds!.map((subjectId) => ({
@@ -133,113 +133,23 @@ export class AuthService {
       );
 
       return {
-        message: 'Account created. Please verify your email.',
+        message: 'Account created successfully.',
         user: txResult.user,
       };
     } catch (err) {
-      // Clean up Supabase Auth user on Prisma failure
-      await this.supabase.auth.admin.deleteUser(authData.user.id);
+      // Clean up Clerk user on Prisma failure
+      await this.clerk.users.deleteUser(clerkUser.id);
       throw err;
     }
   }
 
-  async login(dto: LoginDto) {
-    // 1. Authenticate with Supabase
-    const { data, error } = await this.supabase.auth.signInWithPassword({
-      email: dto.email,
-      password: dto.password,
-    });
-
-    if (error) {
-      throw new UnauthorizedException({
-        error: 'UNAUTHORIZED',
-        message: 'Invalid credentials',
-      });
-    }
-
-    // 2. Fetch user + profile from DB (select only needed fields)
-    const dbUser = await this.prisma.user.findUnique({
-      where: { supabaseId: data.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        role: true,
-        studentProfile: { select: { id: true } },
-        teacherProfile: { select: { id: true } },
-      },
-    });
-
-    if (!dbUser) {
-      throw new NotFoundException({
-        error: 'NOT_FOUND',
-        message: 'User not found in database',
-      });
-    }
-
-    return {
-      token: data.session.access_token,
-      user: dbUser,
-      profile: dbUser.studentProfile ?? dbUser.teacherProfile,
-    };
-  }
-
-  async resetPassword(email: string) {
-    const frontendUrl =
-      this.configService.getOrThrow<string>('FRONTEND_URL');
-    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${frontendUrl}/auth/callback?type=recovery`,
-    });
-    if (error) {
+  async updatePassword(clerkId: string, newPassword: string) {
+    try {
+      await this.clerk.users.updateUser(clerkId, { password: newPassword });
+    } catch (err: any) {
       throw new BadRequestException({
         error: 'BAD_REQUEST',
-        message: error.message,
-      });
-    }
-    return { message: 'Password reset email sent' };
-  }
-
-  async verifyRecovery(tokenHash: string, type: string) {
-    const { data, error } = await this.supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: type as 'recovery',
-    });
-
-    if (error || !data.session) {
-      throw new BadRequestException({
-        error: 'BAD_REQUEST',
-        message: error?.message ?? 'Invalid or expired recovery token',
-      });
-    }
-
-    const dbUser = await this.prisma.user.findUnique({
-      where: { supabaseId: data.user!.id },
-    });
-
-    if (!dbUser) {
-      throw new NotFoundException({
-        error: 'NOT_FOUND',
-        message: 'User not found in database',
-      });
-    }
-
-    return {
-      token: data.session.access_token,
-      user: dbUser,
-    };
-  }
-
-  async updatePassword(supabaseId: string, newPassword: string) {
-    const { error } = await this.supabase.auth.admin.updateUserById(
-      supabaseId,
-      { password: newPassword },
-    );
-
-    if (error) {
-      throw new BadRequestException({
-        error: 'BAD_REQUEST',
-        message: error.message,
+        message: err?.errors?.[0]?.message ?? 'Failed to update password',
       });
     }
 
