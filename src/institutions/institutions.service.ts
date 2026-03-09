@@ -31,6 +31,7 @@ export class InstitutionsService {
         city: true,
         type: true,
         logoUrl: true,
+        isEnabled: true,
       },
       orderBy: { name: 'asc' },
     });
@@ -46,6 +47,8 @@ export class InstitutionsService {
         city: true,
         type: true,
         logoUrl: true,
+        isEnabled: true,
+        _count: { select: { courses: true } },
       },
     });
 
@@ -56,18 +59,18 @@ export class InstitutionsService {
       });
     }
 
-    return institution;
+    const { _count, ...rest } = institution;
+    return { ...rest, courseCount: _count.courses };
   }
 
   async findSubjects(institutionId: string) {
-    // Parallelize all 3 queries to reduce round-trips
     const [institution, institutionSubjects, teacherCounts] = await Promise.all([
       this.prisma.institution.findUnique({
         where: { id: institutionId },
         select: { id: true, name: true, shortName: true, type: true },
       }),
       this.prisma.institutionSubject.findMany({
-        where: { institutionId },
+        where: { institutionId, courseId: null },
         select: {
           yearLabel: true,
           yearOrder: true,
@@ -100,26 +103,81 @@ export class InstitutionsService {
       countMap.get(row.subjectId)!.add(row.teacherProfileId);
     }
 
-    // Return flat array matching frontend InstitutionSubject[] shape
-    // Deduplicate subjects (same subject can appear in multiple yearLabels)
-    const seen = new Set<string>();
-    const result: {
-      subjectId: string;
-      subjectName: string;
-      teacherCount: number;
-    }[] = [];
+    // Group by yearLabel for schools
+    const yearMap = new Map<
+      string,
+      { yearLabel: string; yearOrder: number; subjects: { subjectId: string; subjectName: string; subjectIcon: string | null; teacherCount: number }[] }
+    >();
 
     for (const is of institutionSubjects) {
-      if (!seen.has(is.subject.id)) {
-        seen.add(is.subject.id);
-        result.push({
-          subjectId: is.subject.id,
-          subjectName: is.subject.name,
-          teacherCount: countMap.get(is.subject.id)?.size ?? 0,
+      if (!yearMap.has(is.yearLabel)) {
+        yearMap.set(is.yearLabel, {
+          yearLabel: is.yearLabel,
+          yearOrder: is.yearOrder,
+          subjects: [],
         });
       }
+      yearMap.get(is.yearLabel)!.subjects.push({
+        subjectId: is.subject.id,
+        subjectName: is.subject.name,
+        subjectIcon: is.subject.icon,
+        teacherCount: countMap.get(is.subject.id)?.size ?? 0,
+      });
     }
 
-    return result;
+    return {
+      institution,
+      years: Array.from(yearMap.values()),
+    };
+  }
+
+  async findYearSubjects(institutionId: string, yearOrder: number) {
+    const [institution, institutionSubjects, teacherCounts] = await Promise.all([
+      this.prisma.institution.findUnique({
+        where: { id: institutionId },
+        select: { id: true, name: true, shortName: true, type: true },
+      }),
+      this.prisma.institutionSubject.findMany({
+        where: { institutionId, yearOrder, courseId: null },
+        select: {
+          yearLabel: true,
+          subject: { select: { id: true, name: true, icon: true } },
+        },
+        orderBy: { subject: { name: 'asc' } },
+      }),
+      this.prisma.classEvent.groupBy({
+        by: ['subjectId', 'teacherProfileId'],
+        where: {
+          institutionId,
+          publicationStatus: { in: ['PUBLISHED', 'FINISHED'] },
+        },
+      }),
+    ]);
+
+    if (!institution) {
+      throw new NotFoundException({
+        error: 'NOT_FOUND',
+        message: 'Institution not found',
+      });
+    }
+
+    const countMap = new Map<string, Set<string>>();
+    for (const row of teacherCounts) {
+      if (!countMap.has(row.subjectId)) {
+        countMap.set(row.subjectId, new Set());
+      }
+      countMap.get(row.subjectId)!.add(row.teacherProfileId);
+    }
+
+    const yearLabel = institutionSubjects[0]?.yearLabel ?? `${yearOrder}o Ano`;
+
+    const subjects = institutionSubjects.map((is) => ({
+      subjectId: is.subject.id,
+      subjectName: is.subject.name,
+      subjectIcon: is.subject.icon,
+      teacherCount: countMap.get(is.subject.id)?.size ?? 0,
+    }));
+
+    return { institution, yearOrder, yearLabel, subjects };
   }
 }

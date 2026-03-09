@@ -117,13 +117,29 @@ model Institution {
   city                String               @db.VarChar(100)
   type                InstitutionType
   logoUrl             String               @map("logo_url")
+  isEnabled           Boolean              @default(true) @map("is_enabled")
   subjects            InstitutionSubject[]
+  courses             Course[]
   classEvents         ClassEvent[]
   teacherInstitutions TeacherInstitution[]
   studentInstitutions StudentInstitution[]
   preferredByStudents StudentProfile[]     @relation("PreferredInstitution")
 
   @@map("institutions")
+}
+
+model Course {
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institutionId String              @map("institution_id") @db.Uuid
+  name          String              @db.VarChar(200)
+  slug          String              @db.VarChar(100)
+  displayOrder  Int                 @default(0) @map("display_order")
+  institution   Institution         @relation(fields: [institutionId], references: [id])
+  subjects      InstitutionSubject[]
+
+  @@unique([institutionId, slug])
+  @@index([institutionId])
+  @@map("courses")
 }
 
 model Subject {
@@ -141,12 +157,15 @@ model InstitutionSubject {
   id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   institutionId String      @map("institution_id") @db.Uuid
   subjectId     String      @map("subject_id") @db.Uuid
+  courseId       String?     @map("course_id") @db.Uuid
   yearLabel     String      @map("year_label") @db.VarChar(50)
   yearOrder     Int         @map("year_order")
   institution   Institution @relation(fields: [institutionId], references: [id])
   subject       Subject     @relation(fields: [subjectId], references: [id])
+  course        Course?     @relation(fields: [courseId], references: [id])
 
-  @@unique([institutionId, subjectId, yearLabel])
+  @@unique([institutionId, subjectId, yearLabel, courseId])
+  @@index([courseId])
   @@map("institution_subjects")
 }
 

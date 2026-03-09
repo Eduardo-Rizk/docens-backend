@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { Public } from '../auth/decorators/public.decorator';
 import { InstitutionsService } from './institutions.service';
 import { ListInstitutionsDto } from './dto/list-institutions.dto';
@@ -21,5 +21,13 @@ export class InstitutionsController {
   @Get(':id/subjects')
   findSubjects(@Param('id') id: string) {
     return this.institutionsService.findSubjects(id);
+  }
+
+  @Get(':id/years/:yearOrder/subjects')
+  findYearSubjects(
+    @Param('id') id: string,
+    @Param('yearOrder', ParseIntPipe) yearOrder: number,
+  ) {
+    return this.institutionsService.findYearSubjects(id, yearOrder);
   }
 }

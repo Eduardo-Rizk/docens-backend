@@ -16,6 +16,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { StudentModule } from './student/student.module';
 import { UsersModule } from './users/users.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { CoursesModule } from './courses/courses.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -43,6 +44,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     StudentModule,
     UsersModule,
     UploadsModule,
+    CoursesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
