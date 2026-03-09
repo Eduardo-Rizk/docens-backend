@@ -10,6 +10,7 @@ const prisma = new PrismaClient();
 
 // ============================================================================
 // SEED MAP: human-readable name -> stable UUID v4
+// These UUIDs are fixed for the lifetime of the project.
 // ============================================================================
 
 const INSTITUTION_IDS = {
@@ -34,7 +35,7 @@ const COURSE_IDS = {
   Insper_EngProd: 'a1000002-0001-4000-8000-000000000007',
 };
 
-// Original 13 subjects
+// Original 13 school/legacy subjects
 const SUBJECT_IDS = {
   'Calculo I': '1b2e2f5e-7b1d-4b1d-ad34-fcb5993efba5',
   'Direito Constitucional': 'b4eb640d-d749-4f03-8906-dbd912850401',
@@ -51,350 +52,461 @@ const SUBJECT_IDS = {
   Ingles: '9a3df9fc-aff5-460e-8e84-8f49e66a8d6a',
 };
 
-// New university subjects — incrementing UUIDs
-const UNI_SUBJECT_IDS: Record<string, string> = {
-  // --- FGV Admin ---
-  'Introducao a Administracao': 'b0000001-0001-4000-8000-000000000001',
-  'Matematica Aplicada': 'b0000001-0001-4000-8000-000000000002',
-  'Contabilidade Basica': 'b0000001-0001-4000-8000-000000000003',
-  'Economia I': 'b0000001-0001-4000-8000-000000000004',
-  'Marketing I': 'b0000001-0001-4000-8000-000000000005',
-  'Estatistica Aplicada': 'b0000001-0001-4000-8000-000000000006',
-  'Direito Empresarial': 'b0000001-0001-4000-8000-000000000007',
-  'Economia II': 'b0000001-0001-4000-8000-000000000008',
-  'Financas Corporativas': 'b0000001-0001-4000-8000-000000000009',
-  'Gestao de Pessoas': 'b0000001-0001-4000-8000-000000000010',
-  'Comportamento Organizacional': 'b0000001-0001-4000-8000-000000000011',
-  'Marketing II': 'b0000001-0001-4000-8000-000000000012',
-  'Estrategia Empresarial': 'b0000001-0001-4000-8000-000000000013',
-  'Operacoes e Logistica': 'b0000001-0001-4000-8000-000000000014',
-  'Gestao de Projetos': 'b0000001-0001-4000-8000-000000000015',
-  'Contabilidade Gerencial': 'b0000001-0001-4000-8000-000000000016',
-  Empreendedorismo: 'b0000001-0001-4000-8000-000000000017',
-  'Comercio Internacional': 'b0000001-0001-4000-8000-000000000018',
-  'Lideranca e Gestao': 'b0000001-0001-4000-8000-000000000019',
-  'Analise de Investimentos': 'b0000001-0001-4000-8000-000000000020',
-  'Gestao da Inovacao': 'b0000001-0001-4000-8000-000000000021',
-  'Sustentabilidade Corporativa': 'b0000001-0001-4000-8000-000000000022',
-  'Negocios Digitais': 'b0000001-0001-4000-8000-000000000023',
-  Auditoria: 'b0000001-0001-4000-8000-000000000024',
-  'Governanca Corporativa': 'b0000001-0001-4000-8000-000000000025',
-  'Fusoes e Aquisicoes': 'b0000001-0001-4000-8000-000000000026',
-  'Gestao de Riscos': 'b0000001-0001-4000-8000-000000000027',
-  'Consultoria Empresarial': 'b0000001-0001-4000-8000-000000000028',
-  'TCC em Administracao': 'b0000001-0001-4000-8000-000000000029',
-  'Etica Empresarial': 'b0000001-0001-4000-8000-000000000030',
-  'Simulacao Empresarial': 'b0000001-0001-4000-8000-000000000031',
-  'Topicos Avancados em Gestao': 'b0000001-0001-4000-8000-000000000032',
-  // --- FGV Economia ---
-  'Introducao a Economia': 'b0000002-0001-4000-8000-000000000001',
-  'Matematica para Economistas I': 'b0000002-0001-4000-8000-000000000002',
-  'Historia Economica': 'b0000002-0001-4000-8000-000000000003',
-  'Sociologia Economica': 'b0000002-0001-4000-8000-000000000004',
-  'Microeconomia I': 'b0000002-0001-4000-8000-000000000005',
-  'Macroeconomia I': 'b0000002-0001-4000-8000-000000000006',
-  'Estatistica Economica': 'b0000002-0001-4000-8000-000000000007',
-  'Matematica para Economistas II': 'b0000002-0001-4000-8000-000000000008',
-  'Microeconomia II': 'b0000002-0001-4000-8000-000000000009',
-  'Macroeconomia II': 'b0000002-0001-4000-8000-000000000010',
-  'Econometria I': 'b0000002-0001-4000-8000-000000000011',
-  'Economia Brasileira': 'b0000002-0001-4000-8000-000000000012',
-  'Economia Internacional': 'b0000002-0001-4000-8000-000000000013',
-  'Economia Monetaria': 'b0000002-0001-4000-8000-000000000014',
-  'Econometria II': 'b0000002-0001-4000-8000-000000000015',
-  'Economia do Setor Publico': 'b0000002-0001-4000-8000-000000000016',
-  'Desenvolvimento Economico': 'b0000002-0001-4000-8000-000000000017',
-  'Mercado Financeiro': 'b0000002-0001-4000-8000-000000000018',
-  'Economia do Trabalho': 'b0000002-0001-4000-8000-000000000019',
-  'Historia do Pensamento Economico': 'b0000002-0001-4000-8000-000000000020',
-  'Economia Ambiental': 'b0000002-0001-4000-8000-000000000021',
-  'Economia da Tecnologia': 'b0000002-0001-4000-8000-000000000022',
-  'Regulacao Economica': 'b0000002-0001-4000-8000-000000000023',
-  'Comercio Internacional Econ': 'b0000002-0001-4000-8000-000000000024',
-  'Politica Economica': 'b0000002-0001-4000-8000-000000000025',
-  'Economia Comportamental': 'b0000002-0001-4000-8000-000000000026',
-  'Economia da Saude': 'b0000002-0001-4000-8000-000000000027',
-  'Topicos em Microeconomia': 'b0000002-0001-4000-8000-000000000028',
-  'TCC em Economia': 'b0000002-0001-4000-8000-000000000029',
-  'Economia Politica': 'b0000002-0001-4000-8000-000000000030',
-  'Conjuntura Economica': 'b0000002-0001-4000-8000-000000000031',
-  'Seminarios Avancados Econ': 'b0000002-0001-4000-8000-000000000032',
-  // --- FGV Direito ---
-  'Introducao ao Direito': 'b0000003-0001-4000-8000-000000000001',
-  'Teoria do Estado': 'b0000003-0001-4000-8000-000000000002',
-  'Sociologia Juridica': 'b0000003-0001-4000-8000-000000000003',
-  'Historia do Direito': 'b0000003-0001-4000-8000-000000000004',
-  'Direito Constitucional I': 'b0000003-0001-4000-8000-000000000005',
-  'Direito Civil I': 'b0000003-0001-4000-8000-000000000006',
-  'Direito Penal I': 'b0000003-0001-4000-8000-000000000007',
-  'Filosofia do Direito': 'b0000003-0001-4000-8000-000000000008',
-  'Direito Constitucional II': 'b0000003-0001-4000-8000-000000000009',
-  'Direito Civil II': 'b0000003-0001-4000-8000-000000000010',
-  'Direito Penal II': 'b0000003-0001-4000-8000-000000000011',
-  'Direito Administrativo I': 'b0000003-0001-4000-8000-000000000012',
-  'Direito do Trabalho I': 'b0000003-0001-4000-8000-000000000013',
-  'Direito Tributario I': 'b0000003-0001-4000-8000-000000000014',
-  'Direito Civil III': 'b0000003-0001-4000-8000-000000000015',
-  'Direito Administrativo II': 'b0000003-0001-4000-8000-000000000016',
-  'Direito Processual Civil I': 'b0000003-0001-4000-8000-000000000017',
-  'Direito do Trabalho II': 'b0000003-0001-4000-8000-000000000018',
-  'Direito Tributario II': 'b0000003-0001-4000-8000-000000000019',
-  'Direito Empresarial I': 'b0000003-0001-4000-8000-000000000020',
-  'Direito Processual Civil II': 'b0000003-0001-4000-8000-000000000021',
-  'Direito Processual Penal I': 'b0000003-0001-4000-8000-000000000022',
-  'Direito Empresarial II': 'b0000003-0001-4000-8000-000000000023',
-  'Direito Internacional Publico': 'b0000003-0001-4000-8000-000000000024',
-  'Direito Processual Penal II': 'b0000003-0001-4000-8000-000000000025',
-  'Direito Ambiental': 'b0000003-0001-4000-8000-000000000026',
-  'Direito do Consumidor': 'b0000003-0001-4000-8000-000000000027',
-  'Direito Digital': 'b0000003-0001-4000-8000-000000000028',
-  'Direito Previdenciario': 'b0000003-0001-4000-8000-000000000029',
-  'Pratica Juridica I': 'b0000003-0001-4000-8000-000000000030',
-  'Mediacao e Arbitragem': 'b0000003-0001-4000-8000-000000000031',
-  'Direitos Humanos': 'b0000003-0001-4000-8000-000000000032',
-  'Pratica Juridica II': 'b0000003-0001-4000-8000-000000000033',
-  'Etica Profissional': 'b0000003-0001-4000-8000-000000000034',
-  'Direito Eleitoral': 'b0000003-0001-4000-8000-000000000035',
-  'Topicos Especiais em Direito': 'b0000003-0001-4000-8000-000000000036',
-  'TCC em Direito': 'b0000003-0001-4000-8000-000000000037',
-  'Pratica Juridica III': 'b0000003-0001-4000-8000-000000000038',
-  'Seminarios Avancados Dir': 'b0000003-0001-4000-8000-000000000039',
-  'Direito Comparado': 'b0000003-0001-4000-8000-000000000040',
-  // --- Insper Admin ---
-  'Fundamentos de Administracao': 'b0000004-0001-4000-8000-000000000001',
-  'Contabilidade Financeira': 'b0000004-0001-4000-8000-000000000002',
-  'Economia de Empresas': 'b0000004-0001-4000-8000-000000000003',
-  'Marketing Estrategico': 'b0000004-0001-4000-8000-000000000004',
-  'Estatistica para Negocios': 'b0000004-0001-4000-8000-000000000005',
-  'Financas I': 'b0000004-0001-4000-8000-000000000006',
-  'Financas II': 'b0000004-0001-4000-8000-000000000007',
-  'Gestao de Operacoes': 'b0000004-0001-4000-8000-000000000008',
-  'Pesquisa de Mercado': 'b0000004-0001-4000-8000-000000000009',
-  'Estrategia Competitiva': 'b0000004-0001-4000-8000-000000000010',
-  'Contabilidade de Custos': 'b0000004-0001-4000-8000-000000000011',
-  'Empreendedorismo e Inovacao': 'b0000004-0001-4000-8000-000000000012',
-  'Business Analytics': 'b0000004-0001-4000-8000-000000000013',
-  Negociacao: 'b0000004-0001-4000-8000-000000000014',
-  'Financas III': 'b0000004-0001-4000-8000-000000000015',
-  'Gestao de Tecnologia': 'b0000004-0001-4000-8000-000000000016',
-  'Marketing Digital': 'b0000004-0001-4000-8000-000000000017',
-  'Supply Chain': 'b0000004-0001-4000-8000-000000000018',
-  Lideranca: 'b0000004-0001-4000-8000-000000000019',
-  'Gestao Internacional': 'b0000004-0001-4000-8000-000000000020',
-  Valuation: 'b0000004-0001-4000-8000-000000000021',
-  'Startup Lab': 'b0000004-0001-4000-8000-000000000022',
-  'Topicos em Estrategia': 'b0000004-0001-4000-8000-000000000023',
-  'TCC Insper': 'b0000004-0001-4000-8000-000000000024',
-  'Business Simulation': 'b0000004-0001-4000-8000-000000000025',
-  'Etica nos Negocios': 'b0000004-0001-4000-8000-000000000026',
-  'Projeto Integrador': 'b0000004-0001-4000-8000-000000000027',
-  // --- Insper Economia ---
-  'Principios de Economia': 'b0000005-0001-4000-8000-000000000001',
-  'Calculo para Economia I': 'b0000005-0001-4000-8000-000000000002',
-  'Introducao a Estatistica': 'b0000005-0001-4000-8000-000000000003',
-  'Historia Economica Global': 'b0000005-0001-4000-8000-000000000004',
-  'Calculo para Economia II': 'b0000005-0001-4000-8000-000000000005',
-  'Probabilidade e Estatistica': 'b0000005-0001-4000-8000-000000000006',
-  'Economia Monetaria e Financeira': 'b0000005-0001-4000-8000-000000000007',
-  'Mercados Financeiros': 'b0000005-0001-4000-8000-000000000008',
-  'Game Theory': 'b0000005-0001-4000-8000-000000000009',
-  'Economia e Tecnologia': 'b0000005-0001-4000-8000-000000000010',
-  'Behavioral Economics': 'b0000005-0001-4000-8000-000000000011',
-  'Regulacao e Concorrencia': 'b0000005-0001-4000-8000-000000000012',
-  'Data Science para Economia': 'b0000005-0001-4000-8000-000000000013',
-  'Politica Economica Brasileira': 'b0000005-0001-4000-8000-000000000014',
-  'Health Economics': 'b0000005-0001-4000-8000-000000000015',
-  'Environmental Economics': 'b0000005-0001-4000-8000-000000000016',
-  'Advanced Microeconomics': 'b0000005-0001-4000-8000-000000000017',
-  'TCC Economia Insper': 'b0000005-0001-4000-8000-000000000018',
-  'Macroeconomia Avancada': 'b0000005-0001-4000-8000-000000000019',
-  'Seminarios Econ Insper': 'b0000005-0001-4000-8000-000000000020',
-  'Projeto Final Econ': 'b0000005-0001-4000-8000-000000000021',
-  // --- Insper Direito ---
-  'Fundamentos do Direito': 'b0000006-0001-4000-8000-000000000001',
-  'Teoria Geral do Estado': 'b0000006-0001-4000-8000-000000000002',
-  'Logica Juridica': 'b0000006-0001-4000-8000-000000000003',
-  'Ciencia Politica': 'b0000006-0001-4000-8000-000000000004',
-  'Direito Civil Parte Geral': 'b0000006-0001-4000-8000-000000000005',
-  'Teoria do Direito': 'b0000006-0001-4000-8000-000000000006',
-  'Direito das Obrigacoes': 'b0000006-0001-4000-8000-000000000007',
-  'Direito Administrativo': 'b0000006-0001-4000-8000-000000000008',
-  'Direito do Trabalho': 'b0000006-0001-4000-8000-000000000009',
-  'Direito Tributario': 'b0000006-0001-4000-8000-000000000010',
-  'Direito dos Contratos': 'b0000006-0001-4000-8000-000000000011',
-  'Processo Civil I': 'b0000006-0001-4000-8000-000000000012',
-  'Processo Civil II': 'b0000006-0001-4000-8000-000000000013',
-  'Processo Penal': 'b0000006-0001-4000-8000-000000000014',
-  'Direito Digital e Tecnologia': 'b0000006-0001-4000-8000-000000000015',
-  'Resolucao de Conflitos': 'b0000006-0001-4000-8000-000000000016',
-  'Direito Societario': 'b0000006-0001-4000-8000-000000000017',
-  Compliance: 'b0000006-0001-4000-8000-000000000018',
-  'Propriedade Intelectual': 'b0000006-0001-4000-8000-000000000019',
-  'Clinica Juridica I': 'b0000006-0001-4000-8000-000000000020',
-  'Direito Financeiro': 'b0000006-0001-4000-8000-000000000021',
-  'Direito da Concorrencia': 'b0000006-0001-4000-8000-000000000022',
-  'Clinica Juridica II': 'b0000006-0001-4000-8000-000000000023',
-  'Direitos Fundamentais': 'b0000006-0001-4000-8000-000000000024',
-  'Pratica Profissional': 'b0000006-0001-4000-8000-000000000025',
-  'Direito e Economia': 'b0000006-0001-4000-8000-000000000026',
-  'Topicos Avancados Dir Insper': 'b0000006-0001-4000-8000-000000000027',
-  'Etica e Deontologia': 'b0000006-0001-4000-8000-000000000028',
-  'TCC Direito Insper': 'b0000006-0001-4000-8000-000000000029',
-  'Projeto Final Juridico': 'b0000006-0001-4000-8000-000000000030',
-  'Seminario de Pesquisa': 'b0000006-0001-4000-8000-000000000031',
-  'Direito Global': 'b0000006-0001-4000-8000-000000000032',
-  // --- Insper Eng Computacao ---
-  'Introducao a Computacao': 'b0000007-0001-4000-8000-000000000001',
-  'Algebra Linear': 'b0000007-0001-4000-8000-000000000002',
-  'Calculo II': 'b0000007-0001-4000-8000-000000000003',
-  'Fisica II': 'b0000007-0001-4000-8000-000000000004',
-  'Estrutura de Dados': 'b0000007-0001-4000-8000-000000000005',
-  'Programacao Orientada a Objetos': 'b0000007-0001-4000-8000-000000000006',
-  'Calculo III': 'b0000007-0001-4000-8000-000000000007',
-  'Circuitos Eletricos': 'b0000007-0001-4000-8000-000000000008',
-  'Algoritmos Avancados': 'b0000007-0001-4000-8000-000000000009',
-  'Banco de Dados': 'b0000007-0001-4000-8000-000000000010',
-  'Sinais e Sistemas': 'b0000007-0001-4000-8000-000000000011',
-  'Redes de Computadores': 'b0000007-0001-4000-8000-000000000012',
-  'Engenharia de Software': 'b0000007-0001-4000-8000-000000000013',
-  'Sistemas Operacionais': 'b0000007-0001-4000-8000-000000000014',
-  'Inteligencia Artificial': 'b0000007-0001-4000-8000-000000000015',
-  'Arquitetura de Computadores': 'b0000007-0001-4000-8000-000000000016',
-  Compiladores: 'b0000007-0001-4000-8000-000000000017',
-  'Computacao Grafica': 'b0000007-0001-4000-8000-000000000018',
-  'Machine Learning': 'b0000007-0001-4000-8000-000000000019',
-  'Sistemas Distribuidos': 'b0000007-0001-4000-8000-000000000020',
-  'Seguranca da Informacao': 'b0000007-0001-4000-8000-000000000021',
-  'Desenvolvimento Web': 'b0000007-0001-4000-8000-000000000022',
-  'Deep Learning': 'b0000007-0001-4000-8000-000000000023',
-  'Cloud Computing': 'b0000007-0001-4000-8000-000000000024',
-  DevOps: 'b0000007-0001-4000-8000-000000000025',
-  IoT: 'b0000007-0001-4000-8000-000000000026',
-  Robotica: 'b0000007-0001-4000-8000-000000000027',
-  'Processamento de Imagens': 'b0000007-0001-4000-8000-000000000028',
-  'Projeto de Sistemas': 'b0000007-0001-4000-8000-000000000029',
-  Blockchain: 'b0000007-0001-4000-8000-000000000030',
-  'Projeto de Graduacao I EC': 'b0000007-0001-4000-8000-000000000031',
-  'Topicos em IA': 'b0000007-0001-4000-8000-000000000032',
-  'Empreendedorismo Tech': 'b0000007-0001-4000-8000-000000000033',
-  'Etica em Tecnologia': 'b0000007-0001-4000-8000-000000000034',
-  'TCC Eng Computacao': 'b0000007-0001-4000-8000-000000000035',
-  'Projeto de Graduacao II EC': 'b0000007-0001-4000-8000-000000000036',
-  'Seminario Final EC': 'b0000007-0001-4000-8000-000000000037',
-  'Inovacao EC': 'b0000007-0001-4000-8000-000000000038',
-  // --- Insper Eng Mecanica ---
-  'Desenho Tecnico': 'b0000008-0001-4000-8000-000000000001',
-  'Quimica Geral': 'b0000008-0001-4000-8000-000000000002',
-  'Mecanica dos Solidos I': 'b0000008-0001-4000-8000-000000000003',
-  'Ciencia dos Materiais': 'b0000008-0001-4000-8000-000000000004',
-  Termodinamica: 'b0000008-0001-4000-8000-000000000005',
-  'Mecanica dos Solidos II': 'b0000008-0001-4000-8000-000000000006',
-  'Mecanica dos Fluidos I': 'b0000008-0001-4000-8000-000000000007',
-  'Transferencia de Calor': 'b0000008-0001-4000-8000-000000000008',
-  'Mecanica dos Fluidos II': 'b0000008-0001-4000-8000-000000000009',
-  'Dinamica de Maquinas': 'b0000008-0001-4000-8000-000000000010',
-  'Sistemas de Controle': 'b0000008-0001-4000-8000-000000000011',
-  'Elementos de Maquinas': 'b0000008-0001-4000-8000-000000000012',
-  'Processos de Fabricacao': 'b0000008-0001-4000-8000-000000000013',
-  'Vibracoes Mecanicas': 'b0000008-0001-4000-8000-000000000014',
-  'Projeto Mecanico I': 'b0000008-0001-4000-8000-000000000015',
-  'Projeto Mecanico II': 'b0000008-0001-4000-8000-000000000016',
-  'Automacao Industrial': 'b0000008-0001-4000-8000-000000000017',
-  'Mecanica Computacional': 'b0000008-0001-4000-8000-000000000018',
-  'Energia e Meio Ambiente': 'b0000008-0001-4000-8000-000000000019',
-  'Engenharia Automotiva': 'b0000008-0001-4000-8000-000000000020',
-  'Sistemas Termicos': 'b0000008-0001-4000-8000-000000000021',
-  'Materiais Avancados': 'b0000008-0001-4000-8000-000000000022',
-  'Gestao da Producao': 'b0000008-0001-4000-8000-000000000023',
-  'Manutencao Industrial': 'b0000008-0001-4000-8000-000000000024',
-  'Engenharia de Qualidade': 'b0000008-0001-4000-8000-000000000025',
-  'Projeto Integrado EM': 'b0000008-0001-4000-8000-000000000026',
-  'Simulacao Numerica': 'b0000008-0001-4000-8000-000000000027',
-  'Projeto de Graduacao I EM': 'b0000008-0001-4000-8000-000000000028',
-  'Topicos em Mecanica': 'b0000008-0001-4000-8000-000000000029',
-  'Etica em Engenharia': 'b0000008-0001-4000-8000-000000000030',
-  'TCC Eng Mecanica': 'b0000008-0001-4000-8000-000000000031',
-  'Projeto de Graduacao II EM': 'b0000008-0001-4000-8000-000000000032',
-  'Seminario Final EM': 'b0000008-0001-4000-8000-000000000033',
-  'Inovacao Industrial': 'b0000008-0001-4000-8000-000000000034',
-  // --- Insper Eng Mecatronica ---
-  'Introducao a Mecatronica': 'b0000009-0001-4000-8000-000000000001',
-  'Logica Digital': 'b0000009-0001-4000-8000-000000000002',
-  'Programacao para Engenharia': 'b0000009-0001-4000-8000-000000000003',
-  'Eletronica Analogica': 'b0000009-0001-4000-8000-000000000004',
-  'Mecanica dos Solidos MT': 'b0000009-0001-4000-8000-000000000005',
-  'Eletronica Digital': 'b0000009-0001-4000-8000-000000000006',
-  'Controle Automatico I': 'b0000009-0001-4000-8000-000000000007',
-  Microcontroladores: 'b0000009-0001-4000-8000-000000000008',
-  Instrumentacao: 'b0000009-0001-4000-8000-000000000009',
-  'Controle Automatico II': 'b0000009-0001-4000-8000-000000000010',
-  'Robotica I': 'b0000009-0001-4000-8000-000000000011',
-  'Sistemas Embarcados': 'b0000009-0001-4000-8000-000000000012',
-  'Acionamentos Eletricos': 'b0000009-0001-4000-8000-000000000013',
-  'Robotica II': 'b0000009-0001-4000-8000-000000000014',
-  'Automacao Industrial MT': 'b0000009-0001-4000-8000-000000000015',
-  'Processamento de Sinais': 'b0000009-0001-4000-8000-000000000016',
-  'Visao Computacional': 'b0000009-0001-4000-8000-000000000017',
-  'IA para Engenharia': 'b0000009-0001-4000-8000-000000000018',
-  'Sistemas CPS': 'b0000009-0001-4000-8000-000000000019',
-  'Manufatura Avancada': 'b0000009-0001-4000-8000-000000000020',
-  'IoT Industrial': 'b0000009-0001-4000-8000-000000000021',
-  'Projeto Mecatronico': 'b0000009-0001-4000-8000-000000000022',
-  'Sistemas de Energia': 'b0000009-0001-4000-8000-000000000023',
-  'Controle Robusto': 'b0000009-0001-4000-8000-000000000024',
-  'Manutencao Preditiva': 'b0000009-0001-4000-8000-000000000025',
-  'Projeto de Graduacao I MT': 'b0000009-0001-4000-8000-000000000026',
-  'Topicos em Mecatronica': 'b0000009-0001-4000-8000-000000000027',
-  'Empreendedorismo MT': 'b0000009-0001-4000-8000-000000000028',
-  'Etica MT': 'b0000009-0001-4000-8000-000000000029',
-  'TCC Eng Mecatronica': 'b0000009-0001-4000-8000-000000000030',
-  'Projeto de Graduacao II MT': 'b0000009-0001-4000-8000-000000000031',
-  'Seminario Final MT': 'b0000009-0001-4000-8000-000000000032',
-  'Inovacao MT': 'b0000009-0001-4000-8000-000000000033',
-  // --- Insper Eng Producao ---
-  'Introducao a Eng de Producao': 'b0000010-0001-4000-8000-000000000001',
-  'Economia para Engenheiros': 'b0000010-0001-4000-8000-000000000002',
-  'Estatistica para Engenharia': 'b0000010-0001-4000-8000-000000000003',
-  'Contabilidade para Engenheiros': 'b0000010-0001-4000-8000-000000000004',
-  'Pesquisa Operacional I': 'b0000010-0001-4000-8000-000000000005',
-  'Processos Produtivos': 'b0000010-0001-4000-8000-000000000006',
-  'Gestao da Qualidade': 'b0000010-0001-4000-8000-000000000007',
-  'Engenharia Economica': 'b0000010-0001-4000-8000-000000000008',
-  'Pesquisa Operacional II': 'b0000010-0001-4000-8000-000000000009',
-  'Planejamento da Producao': 'b0000010-0001-4000-8000-000000000010',
-  Logistica: 'b0000010-0001-4000-8000-000000000011',
-  'Simulacao de Sistemas': 'b0000010-0001-4000-8000-000000000012',
-  Ergonomia: 'b0000010-0001-4000-8000-000000000013',
-  'Lean Manufacturing': 'b0000010-0001-4000-8000-000000000014',
-  'Gestao de Custos': 'b0000010-0001-4000-8000-000000000015',
-  'Supply Chain Management': 'b0000010-0001-4000-8000-000000000016',
-  'Gestao da Inovacao EP': 'b0000010-0001-4000-8000-000000000017',
-  'Sistemas de Informacao': 'b0000010-0001-4000-8000-000000000018',
-  'Engenharia de Sustentabilidade': 'b0000010-0001-4000-8000-000000000019',
-  'Business Intelligence': 'b0000010-0001-4000-8000-000000000020',
-  'Gestao Estrategica': 'b0000010-0001-4000-8000-000000000021',
-  'Startup e Inovacao': 'b0000010-0001-4000-8000-000000000022',
-  'Topicos em Producao': 'b0000010-0001-4000-8000-000000000023',
-  'Projeto de Fabrica': 'b0000010-0001-4000-8000-000000000024',
-  'Consultoria em Producao': 'b0000010-0001-4000-8000-000000000025',
-  'Automacao da Producao': 'b0000010-0001-4000-8000-000000000026',
-  'Gestao de Pessoas EP': 'b0000010-0001-4000-8000-000000000027',
-  'Projeto de Graduacao I EP': 'b0000010-0001-4000-8000-000000000028',
-  'Topicos Avancados EP': 'b0000010-0001-4000-8000-000000000029',
-  'Empreendedorismo EP': 'b0000010-0001-4000-8000-000000000030',
-  'Etica EP': 'b0000010-0001-4000-8000-000000000031',
-  'TCC Eng Producao': 'b0000010-0001-4000-8000-000000000032',
-  'Projeto de Graduacao II EP': 'b0000010-0001-4000-8000-000000000033',
-  'Seminario Final EP': 'b0000010-0001-4000-8000-000000000034',
-  'Inovacao EP': 'b0000010-0001-4000-8000-000000000035',
-};
+// ============================================================================
+// NEW UNIVERSITY SUBJECT IDS — deterministic pattern
+// CC = course index, SS = semester, NN = subject within semester
+// ============================================================================
 
-// Helper to get any subject ID
-function sid(name: string): string {
-  return SUBJECT_IDS[name as keyof typeof SUBJECT_IDS] ??
-    UNI_SUBJECT_IDS[name] ??
-    (() => { throw new Error(`Unknown subject: ${name}`); })();
+function subId(course: number, semester: number, index: number): string {
+  const c = String(course).padStart(2, '0');
+  const s = String(semester).padStart(2, '0');
+  const n = String(index).padStart(2, '0');
+  return `b0000000-${c}${s}-4${n}0-8000-000000000001`;
 }
+
+// ============================================================================
+// FGV ADMINISTRACAO subjects (course=1)
+// ============================================================================
+const FGV_ADMIN_SUBJECTS = [
+  { id: subId(1,1,1), name: 'Introducao a Administracao', icon: 'Briefcase' },
+  { id: subId(1,1,2), name: 'Matematica Aplicada', icon: 'Calculator' },
+  { id: subId(1,1,3), name: 'Contabilidade Basica', icon: 'Receipt' },
+  { id: subId(1,1,4), name: 'Economia I', icon: 'TrendingUp' },
+  { id: subId(1,2,1), name: 'Marketing I', icon: 'Megaphone' },
+  { id: subId(1,2,2), name: 'Estatistica Aplicada', icon: 'BarChart3' },
+  { id: subId(1,2,3), name: 'Direito Empresarial', icon: 'Scale' },
+  { id: subId(1,2,4), name: 'Economia II', icon: 'TrendingUp' },
+  { id: subId(1,3,1), name: 'Financas Corporativas', icon: 'DollarSign' },
+  { id: subId(1,3,2), name: 'Gestao de Pessoas', icon: 'Users' },
+  { id: subId(1,3,3), name: 'Comportamento Organizacional', icon: 'Brain' },
+  { id: subId(1,3,4), name: 'Marketing II', icon: 'Target' },
+  { id: subId(1,4,1), name: 'Estrategia Empresarial', icon: 'Compass' },
+  { id: subId(1,4,2), name: 'Operacoes e Logistica', icon: 'Truck' },
+  { id: subId(1,4,3), name: 'Gestao de Projetos', icon: 'ClipboardList' },
+  { id: subId(1,4,4), name: 'Contabilidade Gerencial', icon: 'Calculator' },
+  { id: subId(1,5,1), name: 'Empreendedorismo', icon: 'Rocket' },
+  { id: subId(1,5,2), name: 'Comercio Internacional', icon: 'Globe' },
+  { id: subId(1,5,3), name: 'Lideranca e Gestao', icon: 'Crown' },
+  { id: subId(1,5,4), name: 'Analise de Investimentos', icon: 'LineChart' },
+  { id: subId(1,6,1), name: 'Gestao da Inovacao', icon: 'Lightbulb' },
+  { id: subId(1,6,2), name: 'Sustentabilidade Corporativa', icon: 'Leaf' },
+  { id: subId(1,6,3), name: 'Negocios Digitais', icon: 'Laptop' },
+  { id: subId(1,6,4), name: 'Auditoria', icon: 'Search' },
+  { id: subId(1,7,1), name: 'Governanca Corporativa', icon: 'Building2' },
+  { id: subId(1,7,2), name: 'Fusoes e Aquisicoes', icon: 'Handshake' },
+  { id: subId(1,7,3), name: 'Gestao de Riscos', icon: 'ShieldAlert' },
+  { id: subId(1,7,4), name: 'Consultoria Empresarial', icon: 'MessageSquare' },
+  { id: subId(1,8,1), name: 'TCC em Administracao', icon: 'GraduationCap' },
+  { id: subId(1,8,2), name: 'Etica Empresarial', icon: 'Heart' },
+  { id: subId(1,8,3), name: 'Simulacao Empresarial', icon: 'Gamepad2' },
+  { id: subId(1,8,4), name: 'Topicos Avancados em Gestao', icon: 'BookOpen' },
+];
+
+// ============================================================================
+// FGV ECONOMIA subjects (course=2)
+// ============================================================================
+const FGV_ECONOMIA_SUBJECTS = [
+  { id: subId(2,1,1), name: 'Introducao a Economia', icon: 'TrendingUp' },
+  { id: subId(2,1,2), name: 'Matematica para Economistas I', icon: 'Calculator' },
+  { id: subId(2,1,3), name: 'Historia Economica', icon: 'Landmark' },
+  { id: subId(2,1,4), name: 'Sociologia Economica', icon: 'Users' },
+  { id: subId(2,2,1), name: 'Microeconomia I', icon: 'PieChart' },
+  { id: subId(2,2,2), name: 'Macroeconomia I', icon: 'Globe' },
+  { id: subId(2,2,3), name: 'Estatistica Economica', icon: 'BarChart3' },
+  { id: subId(2,2,4), name: 'Matematica para Economistas II', icon: 'Calculator' },
+  { id: subId(2,3,1), name: 'Microeconomia II', icon: 'PieChart' },
+  { id: subId(2,3,2), name: 'Macroeconomia II', icon: 'Globe' },
+  { id: subId(2,3,3), name: 'Econometria I', icon: 'LineChart' },
+  { id: subId(2,3,4), name: 'Economia Brasileira', icon: 'MapPin' },
+  { id: subId(2,4,1), name: 'Economia Internacional', icon: 'Globe' },
+  { id: subId(2,4,2), name: 'Economia Monetaria', icon: 'Coins' },
+  { id: subId(2,4,3), name: 'Econometria II', icon: 'LineChart' },
+  { id: subId(2,4,4), name: 'Economia do Setor Publico', icon: 'Building2' },
+  { id: subId(2,5,1), name: 'Desenvolvimento Economico', icon: 'Sprout' },
+  { id: subId(2,5,2), name: 'Mercado Financeiro', icon: 'CandlestickChart' },
+  { id: subId(2,5,3), name: 'Economia do Trabalho', icon: 'Briefcase' },
+  { id: subId(2,5,4), name: 'Historia do Pensamento Economico', icon: 'BookOpen' },
+  { id: subId(2,6,1), name: 'Economia Ambiental', icon: 'Leaf' },
+  { id: subId(2,6,2), name: 'Economia da Tecnologia', icon: 'Cpu' },
+  { id: subId(2,6,3), name: 'Regulacao Economica', icon: 'Gavel' },
+  { id: subId(2,6,4), name: 'Comercio Internacional', icon: 'Ship' },
+  { id: subId(2,7,1), name: 'Politica Economica', icon: 'Landmark' },
+  { id: subId(2,7,2), name: 'Economia Comportamental', icon: 'Brain' },
+  { id: subId(2,7,3), name: 'Economia da Saude', icon: 'HeartPulse' },
+  { id: subId(2,7,4), name: 'Topicos em Microeconomia', icon: 'Microscope' },
+  { id: subId(2,8,1), name: 'TCC em Economia', icon: 'GraduationCap' },
+  { id: subId(2,8,2), name: 'Economia Politica', icon: 'Scale' },
+  { id: subId(2,8,3), name: 'Conjuntura Economica', icon: 'Newspaper' },
+  { id: subId(2,8,4), name: 'Seminarios Avancados', icon: 'Presentation' },
+];
+
+// ============================================================================
+// FGV DIREITO subjects (course=3, 10 semesters)
+// ============================================================================
+const FGV_DIREITO_SUBJECTS = [
+  { id: subId(3,1,1), name: 'Introducao ao Direito', icon: 'BookOpen' },
+  { id: subId(3,1,2), name: 'Teoria do Estado', icon: 'Landmark' },
+  { id: subId(3,1,3), name: 'Sociologia Juridica', icon: 'Users' },
+  { id: subId(3,1,4), name: 'Historia do Direito', icon: 'ScrollText' },
+  { id: subId(3,2,1), name: 'Direito Constitucional I', icon: 'Scale' },
+  { id: subId(3,2,2), name: 'Direito Civil I', icon: 'FileText' },
+  { id: subId(3,2,3), name: 'Direito Penal I', icon: 'Gavel' },
+  { id: subId(3,2,4), name: 'Filosofia do Direito', icon: 'Brain' },
+  { id: subId(3,3,1), name: 'Direito Constitucional II', icon: 'Scale' },
+  { id: subId(3,3,2), name: 'Direito Civil II', icon: 'FileText' },
+  { id: subId(3,3,3), name: 'Direito Penal II', icon: 'Gavel' },
+  { id: subId(3,3,4), name: 'Direito Administrativo I', icon: 'Building2' },
+  { id: subId(3,4,1), name: 'Direito do Trabalho I', icon: 'Briefcase' },
+  { id: subId(3,4,2), name: 'Direito Tributario I', icon: 'Receipt' },
+  { id: subId(3,4,3), name: 'Direito Civil III', icon: 'FileText' },
+  { id: subId(3,4,4), name: 'Direito Administrativo II', icon: 'Building2' },
+  { id: subId(3,5,1), name: 'Direito Processual Civil I', icon: 'Hammer' },
+  { id: subId(3,5,2), name: 'Direito do Trabalho II', icon: 'Briefcase' },
+  { id: subId(3,5,3), name: 'Direito Tributario II', icon: 'Receipt' },
+  { id: subId(3,5,4), name: 'Direito Empresarial I', icon: 'Building' },
+  { id: subId(3,6,1), name: 'Direito Processual Civil II', icon: 'Hammer' },
+  { id: subId(3,6,2), name: 'Direito Processual Penal I', icon: 'ShieldAlert' },
+  { id: subId(3,6,3), name: 'Direito Empresarial II', icon: 'Building' },
+  { id: subId(3,6,4), name: 'Direito Internacional Publico', icon: 'Globe' },
+  { id: subId(3,7,1), name: 'Direito Processual Penal II', icon: 'ShieldAlert' },
+  { id: subId(3,7,2), name: 'Direito Ambiental', icon: 'Leaf' },
+  { id: subId(3,7,3), name: 'Direito do Consumidor', icon: 'ShoppingCart' },
+  { id: subId(3,7,4), name: 'Direito Digital', icon: 'Laptop' },
+  { id: subId(3,8,1), name: 'Direito Previdenciario', icon: 'Umbrella' },
+  { id: subId(3,8,2), name: 'Pratica Juridica I', icon: 'Scale' },
+  { id: subId(3,8,3), name: 'Mediacao e Arbitragem', icon: 'Handshake' },
+  { id: subId(3,8,4), name: 'Direitos Humanos', icon: 'Heart' },
+  { id: subId(3,9,1), name: 'Pratica Juridica II', icon: 'Scale' },
+  { id: subId(3,9,2), name: 'Etica Profissional', icon: 'Award' },
+  { id: subId(3,9,3), name: 'Direito Eleitoral', icon: 'Vote' },
+  { id: subId(3,9,4), name: 'Topicos Especiais em Direito', icon: 'Bookmark' },
+  { id: subId(3,10,1), name: 'TCC em Direito', icon: 'GraduationCap' },
+  { id: subId(3,10,2), name: 'Pratica Juridica III', icon: 'Scale' },
+  { id: subId(3,10,3), name: 'Seminarios Avancados', icon: 'Presentation' },
+  { id: subId(3,10,4), name: 'Direito Comparado', icon: 'Globe' },
+];
+
+// ============================================================================
+// INSPER ADMINISTRACAO subjects (course=4)
+// ============================================================================
+const INSPER_ADMIN_SUBJECTS = [
+  { id: subId(4,1,1), name: 'Fundamentos de Administracao', icon: 'Briefcase' },
+  { id: subId(4,1,2), name: 'Calculo I', icon: 'Sigma' },
+  { id: subId(4,1,3), name: 'Contabilidade Financeira', icon: 'Receipt' },
+  { id: subId(4,1,4), name: 'Economia de Empresas', icon: 'TrendingUp' },
+  { id: subId(4,2,1), name: 'Marketing Estrategico', icon: 'Target' },
+  { id: subId(4,2,2), name: 'Estatistica para Negocios', icon: 'BarChart3' },
+  { id: subId(4,2,3), name: 'Financas I', icon: 'DollarSign' },
+  { id: subId(4,2,4), name: 'Comportamento Organizacional', icon: 'Brain' },
+  { id: subId(4,3,1), name: 'Financas II', icon: 'DollarSign' },
+  { id: subId(4,3,2), name: 'Gestao de Operacoes', icon: 'Settings' },
+  { id: subId(4,3,3), name: 'Pesquisa de Mercado', icon: 'Search' },
+  { id: subId(4,3,4), name: 'Direito Empresarial', icon: 'Scale' },
+  { id: subId(4,4,1), name: 'Estrategia Competitiva', icon: 'Compass' },
+  { id: subId(4,4,2), name: 'Gestao de Pessoas', icon: 'Users' },
+  { id: subId(4,4,3), name: 'Contabilidade de Custos', icon: 'Calculator' },
+  { id: subId(4,4,4), name: 'Economia Brasileira', icon: 'MapPin' },
+  { id: subId(4,5,1), name: 'Empreendedorismo e Inovacao', icon: 'Rocket' },
+  { id: subId(4,5,2), name: 'Business Analytics', icon: 'Database' },
+  { id: subId(4,5,3), name: 'Negociacao', icon: 'Handshake' },
+  { id: subId(4,5,4), name: 'Financas III', icon: 'LineChart' },
+  { id: subId(4,6,1), name: 'Gestao de Tecnologia', icon: 'Cpu' },
+  { id: subId(4,6,2), name: 'Marketing Digital', icon: 'Smartphone' },
+  { id: subId(4,6,3), name: 'Supply Chain', icon: 'Truck' },
+  { id: subId(4,6,4), name: 'Lideranca', icon: 'Crown' },
+  { id: subId(4,7,1), name: 'Gestao Internacional', icon: 'Globe' },
+  { id: subId(4,7,2), name: 'Valuation', icon: 'TrendingUp' },
+  { id: subId(4,7,3), name: 'Startup Lab', icon: 'Zap' },
+  { id: subId(4,7,4), name: 'Topicos em Estrategia', icon: 'Compass' },
+  { id: subId(4,8,1), name: 'TCC Insper', icon: 'GraduationCap' },
+  { id: subId(4,8,2), name: 'Business Simulation', icon: 'Gamepad2' },
+  { id: subId(4,8,3), name: 'Etica nos Negocios', icon: 'Heart' },
+  { id: subId(4,8,4), name: 'Projeto Integrador', icon: 'Puzzle' },
+];
+
+// ============================================================================
+// INSPER ECONOMIA subjects (course=5)
+// ============================================================================
+const INSPER_ECONOMIA_SUBJECTS = [
+  { id: subId(5,1,1), name: 'Principios de Economia', icon: 'TrendingUp' },
+  { id: subId(5,1,2), name: 'Calculo para Economia I', icon: 'Sigma' },
+  { id: subId(5,1,3), name: 'Introducao a Estatistica', icon: 'BarChart3' },
+  { id: subId(5,1,4), name: 'Historia Economica Global', icon: 'Landmark' },
+  { id: subId(5,2,1), name: 'Microeconomia I', icon: 'PieChart' },
+  { id: subId(5,2,2), name: 'Macroeconomia I', icon: 'Globe' },
+  { id: subId(5,2,3), name: 'Calculo para Economia II', icon: 'Sigma' },
+  { id: subId(5,2,4), name: 'Probabilidade e Estatistica', icon: 'Dice' },
+  { id: subId(5,3,1), name: 'Microeconomia II', icon: 'PieChart' },
+  { id: subId(5,3,2), name: 'Macroeconomia II', icon: 'Globe' },
+  { id: subId(5,3,3), name: 'Econometria I', icon: 'LineChart' },
+  { id: subId(5,3,4), name: 'Economia Brasileira', icon: 'MapPin' },
+  { id: subId(5,4,1), name: 'Economia Internacional', icon: 'Globe' },
+  { id: subId(5,4,2), name: 'Economia Monetaria e Financeira', icon: 'Coins' },
+  { id: subId(5,4,3), name: 'Econometria II', icon: 'LineChart' },
+  { id: subId(5,4,4), name: 'Economia do Setor Publico', icon: 'Building2' },
+  { id: subId(5,5,1), name: 'Desenvolvimento Economico', icon: 'Sprout' },
+  { id: subId(5,5,2), name: 'Mercados Financeiros', icon: 'CandlestickChart' },
+  { id: subId(5,5,3), name: 'Economia do Trabalho', icon: 'Briefcase' },
+  { id: subId(5,5,4), name: 'Game Theory', icon: 'Gamepad2' },
+  { id: subId(5,6,1), name: 'Economia e Tecnologia', icon: 'Cpu' },
+  { id: subId(5,6,2), name: 'Behavioral Economics', icon: 'Brain' },
+  { id: subId(5,6,3), name: 'Regulacao e Concorrencia', icon: 'Gavel' },
+  { id: subId(5,6,4), name: 'Data Science para Economia', icon: 'Database' },
+  { id: subId(5,7,1), name: 'Politica Economica Brasileira', icon: 'Landmark' },
+  { id: subId(5,7,2), name: 'Health Economics', icon: 'HeartPulse' },
+  { id: subId(5,7,3), name: 'Environmental Economics', icon: 'Leaf' },
+  { id: subId(5,7,4), name: 'Advanced Microeconomics', icon: 'Microscope' },
+  { id: subId(5,8,1), name: 'TCC Economia Insper', icon: 'GraduationCap' },
+  { id: subId(5,8,2), name: 'Macroeconomia Avancada', icon: 'Globe' },
+  { id: subId(5,8,3), name: 'Seminarios', icon: 'Presentation' },
+  { id: subId(5,8,4), name: 'Projeto Final', icon: 'Puzzle' },
+];
+
+// ============================================================================
+// INSPER DIREITO subjects (course=6, 10 semesters)
+// ============================================================================
+const INSPER_DIREITO_SUBJECTS = [
+  { id: subId(6,1,1), name: 'Fundamentos do Direito', icon: 'BookOpen' },
+  { id: subId(6,1,2), name: 'Teoria Geral do Estado', icon: 'Landmark' },
+  { id: subId(6,1,3), name: 'Logica Juridica', icon: 'Brain' },
+  { id: subId(6,1,4), name: 'Ciencia Politica', icon: 'Vote' },
+  { id: subId(6,2,1), name: 'Direito Constitucional I', icon: 'Scale' },
+  { id: subId(6,2,2), name: 'Direito Civil Parte Geral', icon: 'FileText' },
+  { id: subId(6,2,3), name: 'Direito Penal I', icon: 'Gavel' },
+  { id: subId(6,2,4), name: 'Teoria do Direito', icon: 'BookOpen' },
+  { id: subId(6,3,1), name: 'Direito Constitucional II', icon: 'Scale' },
+  { id: subId(6,3,2), name: 'Direito das Obrigacoes', icon: 'FileText' },
+  { id: subId(6,3,3), name: 'Direito Penal II', icon: 'Gavel' },
+  { id: subId(6,3,4), name: 'Direito Administrativo', icon: 'Building2' },
+  { id: subId(6,4,1), name: 'Direito do Trabalho', icon: 'Briefcase' },
+  { id: subId(6,4,2), name: 'Direito Tributario', icon: 'Receipt' },
+  { id: subId(6,4,3), name: 'Direito dos Contratos', icon: 'FileText' },
+  { id: subId(6,4,4), name: 'Processo Civil I', icon: 'Hammer' },
+  { id: subId(6,5,1), name: 'Processo Civil II', icon: 'Hammer' },
+  { id: subId(6,5,2), name: 'Direito Empresarial', icon: 'Building' },
+  { id: subId(6,5,3), name: 'Processo Penal', icon: 'ShieldAlert' },
+  { id: subId(6,5,4), name: 'Direito Internacional', icon: 'Globe' },
+  { id: subId(6,6,1), name: 'Direito Digital e Tecnologia', icon: 'Laptop' },
+  { id: subId(6,6,2), name: 'Direito Ambiental', icon: 'Leaf' },
+  { id: subId(6,6,3), name: 'Direito do Consumidor', icon: 'ShoppingCart' },
+  { id: subId(6,6,4), name: 'Resolucao de Conflitos', icon: 'Handshake' },
+  { id: subId(6,7,1), name: 'Direito Societario', icon: 'Building2' },
+  { id: subId(6,7,2), name: 'Compliance', icon: 'ShieldCheck' },
+  { id: subId(6,7,3), name: 'Propriedade Intelectual', icon: 'Lightbulb' },
+  { id: subId(6,7,4), name: 'Clinica Juridica I', icon: 'Stethoscope' },
+  { id: subId(6,8,1), name: 'Direito Financeiro', icon: 'DollarSign' },
+  { id: subId(6,8,2), name: 'Direito da Concorrencia', icon: 'Gavel' },
+  { id: subId(6,8,3), name: 'Clinica Juridica II', icon: 'Stethoscope' },
+  { id: subId(6,8,4), name: 'Direitos Fundamentais', icon: 'Heart' },
+  { id: subId(6,9,1), name: 'Pratica Profissional', icon: 'Briefcase' },
+  { id: subId(6,9,2), name: 'Direito e Economia', icon: 'TrendingUp' },
+  { id: subId(6,9,3), name: 'Topicos Avancados', icon: 'Bookmark' },
+  { id: subId(6,9,4), name: 'Etica e Deontologia', icon: 'Award' },
+  { id: subId(6,10,1), name: 'TCC Direito Insper', icon: 'GraduationCap' },
+  { id: subId(6,10,2), name: 'Projeto Final Juridico', icon: 'Puzzle' },
+  { id: subId(6,10,3), name: 'Seminario de Pesquisa', icon: 'Presentation' },
+  { id: subId(6,10,4), name: 'Direito Global', icon: 'Globe' },
+];
+
+// ============================================================================
+// INSPER ENG. COMPUTACAO subjects (course=7, 10 semesters)
+// ============================================================================
+const INSPER_ENGCOMP_SUBJECTS = [
+  { id: subId(7,1,1), name: 'Calculo I', icon: 'Sigma' },
+  { id: subId(7,1,2), name: 'Fisica I', icon: 'Atom' },
+  { id: subId(7,1,3), name: 'Introducao a Computacao', icon: 'Monitor' },
+  { id: subId(7,1,4), name: 'Algebra Linear', icon: 'Grid3x3' },
+  { id: subId(7,2,1), name: 'Calculo II', icon: 'Sigma' },
+  { id: subId(7,2,2), name: 'Fisica II', icon: 'Atom' },
+  { id: subId(7,2,3), name: 'Estrutura de Dados', icon: 'Database' },
+  { id: subId(7,2,4), name: 'Programacao Orientada a Objetos', icon: 'Code' },
+  { id: subId(7,3,1), name: 'Calculo III', icon: 'Sigma' },
+  { id: subId(7,3,2), name: 'Circuitos Eletricos', icon: 'Zap' },
+  { id: subId(7,3,3), name: 'Algoritmos Avancados', icon: 'Binary' },
+  { id: subId(7,3,4), name: 'Banco de Dados', icon: 'Database' },
+  { id: subId(7,4,1), name: 'Sinais e Sistemas', icon: 'Activity' },
+  { id: subId(7,4,2), name: 'Redes de Computadores', icon: 'Network' },
+  { id: subId(7,4,3), name: 'Engenharia de Software', icon: 'Code' },
+  { id: subId(7,4,4), name: 'Sistemas Operacionais', icon: 'Terminal' },
+  { id: subId(7,5,1), name: 'Inteligencia Artificial', icon: 'Brain' },
+  { id: subId(7,5,2), name: 'Arquitetura de Computadores', icon: 'Cpu' },
+  { id: subId(7,5,3), name: 'Compiladores', icon: 'FileCode' },
+  { id: subId(7,5,4), name: 'Computacao Grafica', icon: 'Monitor' },
+  { id: subId(7,6,1), name: 'Machine Learning', icon: 'Brain' },
+  { id: subId(7,6,2), name: 'Sistemas Distribuidos', icon: 'Cloud' },
+  { id: subId(7,6,3), name: 'Seguranca da Informacao', icon: 'Shield' },
+  { id: subId(7,6,4), name: 'Desenvolvimento Web', icon: 'Globe' },
+  { id: subId(7,7,1), name: 'Deep Learning', icon: 'Brain' },
+  { id: subId(7,7,2), name: 'Cloud Computing', icon: 'Cloud' },
+  { id: subId(7,7,3), name: 'DevOps', icon: 'Settings' },
+  { id: subId(7,7,4), name: 'IoT', icon: 'Wifi' },
+  { id: subId(7,8,1), name: 'Robotica', icon: 'Bot' },
+  { id: subId(7,8,2), name: 'Processamento de Imagens', icon: 'Image' },
+  { id: subId(7,8,3), name: 'Projeto de Sistemas', icon: 'Layout' },
+  { id: subId(7,8,4), name: 'Blockchain', icon: 'Link' },
+  { id: subId(7,9,1), name: 'Projeto de Graduacao I', icon: 'Wrench' },
+  { id: subId(7,9,2), name: 'Topicos em IA', icon: 'Sparkles' },
+  { id: subId(7,9,3), name: 'Empreendedorismo Tech', icon: 'Rocket' },
+  { id: subId(7,9,4), name: 'Etica em Tecnologia', icon: 'Heart' },
+  { id: subId(7,10,1), name: 'TCC Eng Computacao', icon: 'GraduationCap' },
+  { id: subId(7,10,2), name: 'Projeto de Graduacao II', icon: 'Wrench' },
+  { id: subId(7,10,3), name: 'Seminario Final', icon: 'Presentation' },
+  { id: subId(7,10,4), name: 'Inovacao', icon: 'Lightbulb' },
+];
+
+// ============================================================================
+// INSPER ENG. MECANICA subjects (course=8, 10 semesters)
+// ============================================================================
+const INSPER_ENGMEC_SUBJECTS = [
+  { id: subId(8,1,1), name: 'Calculo I', icon: 'Sigma' },
+  { id: subId(8,1,2), name: 'Fisica I', icon: 'Atom' },
+  { id: subId(8,1,3), name: 'Desenho Tecnico', icon: 'Pencil' },
+  { id: subId(8,1,4), name: 'Quimica Geral', icon: 'FlaskConical' },
+  { id: subId(8,2,1), name: 'Calculo II', icon: 'Sigma' },
+  { id: subId(8,2,2), name: 'Fisica II', icon: 'Atom' },
+  { id: subId(8,2,3), name: 'Mecanica dos Solidos I', icon: 'Hammer' },
+  { id: subId(8,2,4), name: 'Ciencia dos Materiais', icon: 'Layers' },
+  { id: subId(8,3,1), name: 'Calculo III', icon: 'Sigma' },
+  { id: subId(8,3,2), name: 'Termodinamica', icon: 'Thermometer' },
+  { id: subId(8,3,3), name: 'Mecanica dos Solidos II', icon: 'Hammer' },
+  { id: subId(8,3,4), name: 'Mecanica dos Fluidos I', icon: 'Waves' },
+  { id: subId(8,4,1), name: 'Transferencia de Calor', icon: 'Flame' },
+  { id: subId(8,4,2), name: 'Mecanica dos Fluidos II', icon: 'Waves' },
+  { id: subId(8,4,3), name: 'Dinamica de Maquinas', icon: 'Cog' },
+  { id: subId(8,4,4), name: 'Sistemas de Controle', icon: 'Gauge' },
+  { id: subId(8,5,1), name: 'Elementos de Maquinas', icon: 'Wrench' },
+  { id: subId(8,5,2), name: 'Processos de Fabricacao', icon: 'Factory' },
+  { id: subId(8,5,3), name: 'Vibracoes Mecanicas', icon: 'Activity' },
+  { id: subId(8,5,4), name: 'Projeto Mecanico I', icon: 'Ruler' },
+  { id: subId(8,6,1), name: 'Projeto Mecanico II', icon: 'Ruler' },
+  { id: subId(8,6,2), name: 'Automacao Industrial', icon: 'Bot' },
+  { id: subId(8,6,3), name: 'Mecanica Computacional', icon: 'Monitor' },
+  { id: subId(8,6,4), name: 'Energia e Meio Ambiente', icon: 'Leaf' },
+  { id: subId(8,7,1), name: 'Engenharia Automotiva', icon: 'Car' },
+  { id: subId(8,7,2), name: 'Sistemas Termicos', icon: 'Thermometer' },
+  { id: subId(8,7,3), name: 'Materiais Avancados', icon: 'Layers' },
+  { id: subId(8,7,4), name: 'Gestao da Producao', icon: 'ClipboardList' },
+  { id: subId(8,8,1), name: 'Manutencao Industrial', icon: 'Wrench' },
+  { id: subId(8,8,2), name: 'Engenharia de Qualidade', icon: 'CheckCircle' },
+  { id: subId(8,8,3), name: 'Projeto Integrado', icon: 'Layout' },
+  { id: subId(8,8,4), name: 'Simulacao Numerica', icon: 'Calculator' },
+  { id: subId(8,9,1), name: 'Projeto de Graduacao I', icon: 'Wrench' },
+  { id: subId(8,9,2), name: 'Topicos em Mecanica', icon: 'Cog' },
+  { id: subId(8,9,3), name: 'Empreendedorismo', icon: 'Rocket' },
+  { id: subId(8,9,4), name: 'Etica em Engenharia', icon: 'Heart' },
+  { id: subId(8,10,1), name: 'TCC Eng Mecanica', icon: 'GraduationCap' },
+  { id: subId(8,10,2), name: 'Projeto de Graduacao II', icon: 'Wrench' },
+  { id: subId(8,10,3), name: 'Seminario Final', icon: 'Presentation' },
+  { id: subId(8,10,4), name: 'Inovacao Industrial', icon: 'Lightbulb' },
+];
+
+// ============================================================================
+// INSPER ENG. MECATRONICA subjects (course=9, 10 semesters)
+// ============================================================================
+const INSPER_ENGMECATRONICA_SUBJECTS = [
+  { id: subId(9,1,1), name: 'Calculo I', icon: 'Sigma' },
+  { id: subId(9,1,2), name: 'Fisica I', icon: 'Atom' },
+  { id: subId(9,1,3), name: 'Introducao a Mecatronica', icon: 'Bot' },
+  { id: subId(9,1,4), name: 'Logica Digital', icon: 'Binary' },
+  { id: subId(9,2,1), name: 'Calculo II', icon: 'Sigma' },
+  { id: subId(9,2,2), name: 'Fisica II', icon: 'Atom' },
+  { id: subId(9,2,3), name: 'Circuitos Eletricos', icon: 'Zap' },
+  { id: subId(9,2,4), name: 'Programacao para Engenharia', icon: 'Code' },
+  { id: subId(9,3,1), name: 'Calculo III', icon: 'Sigma' },
+  { id: subId(9,3,2), name: 'Eletronica Analogica', icon: 'Radio' },
+  { id: subId(9,3,3), name: 'Mecanica dos Solidos', icon: 'Hammer' },
+  { id: subId(9,3,4), name: 'Sinais e Sistemas', icon: 'Activity' },
+  { id: subId(9,4,1), name: 'Eletronica Digital', icon: 'Cpu' },
+  { id: subId(9,4,2), name: 'Controle Automatico I', icon: 'Gauge' },
+  { id: subId(9,4,3), name: 'Microcontroladores', icon: 'Chip' },
+  { id: subId(9,4,4), name: 'Instrumentacao', icon: 'Microscope' },
+  { id: subId(9,5,1), name: 'Controle Automatico II', icon: 'Gauge' },
+  { id: subId(9,5,2), name: 'Robotica I', icon: 'Bot' },
+  { id: subId(9,5,3), name: 'Sistemas Embarcados', icon: 'Cpu' },
+  { id: subId(9,5,4), name: 'Acionamentos Eletricos', icon: 'Zap' },
+  { id: subId(9,6,1), name: 'Robotica II', icon: 'Bot' },
+  { id: subId(9,6,2), name: 'Automacao Industrial', icon: 'Factory' },
+  { id: subId(9,6,3), name: 'Processamento de Sinais', icon: 'Activity' },
+  { id: subId(9,6,4), name: 'Visao Computacional', icon: 'Eye' },
+  { id: subId(9,7,1), name: 'Inteligencia Artificial para Eng', icon: 'Brain' },
+  { id: subId(9,7,2), name: 'Sistemas CPS', icon: 'Network' },
+  { id: subId(9,7,3), name: 'Manufatura Avancada', icon: 'Factory' },
+  { id: subId(9,7,4), name: 'IoT Industrial', icon: 'Wifi' },
+  { id: subId(9,8,1), name: 'Projeto Mecatronico', icon: 'Layout' },
+  { id: subId(9,8,2), name: 'Sistemas de Energia', icon: 'Battery' },
+  { id: subId(9,8,3), name: 'Controle Robusto', icon: 'ShieldCheck' },
+  { id: subId(9,8,4), name: 'Manutencao Preditiva', icon: 'Search' },
+  { id: subId(9,9,1), name: 'Projeto de Graduacao I', icon: 'Wrench' },
+  { id: subId(9,9,2), name: 'Topicos em Mecatronica', icon: 'Bot' },
+  { id: subId(9,9,3), name: 'Empreendedorismo', icon: 'Rocket' },
+  { id: subId(9,9,4), name: 'Etica', icon: 'Heart' },
+  { id: subId(9,10,1), name: 'TCC Eng Mecatronica', icon: 'GraduationCap' },
+  { id: subId(9,10,2), name: 'Projeto de Graduacao II', icon: 'Wrench' },
+  { id: subId(9,10,3), name: 'Seminario Final', icon: 'Presentation' },
+  { id: subId(9,10,4), name: 'Inovacao', icon: 'Lightbulb' },
+];
+
+// ============================================================================
+// INSPER ENG. PRODUCAO subjects (course=10, 10 semesters)
+// ============================================================================
+const INSPER_ENGPROD_SUBJECTS = [
+  { id: subId(10,1,1), name: 'Calculo I', icon: 'Sigma' },
+  { id: subId(10,1,2), name: 'Fisica I', icon: 'Atom' },
+  { id: subId(10,1,3), name: 'Introducao a Eng de Producao', icon: 'ClipboardList' },
+  { id: subId(10,1,4), name: 'Economia para Engenheiros', icon: 'TrendingUp' },
+  { id: subId(10,2,1), name: 'Calculo II', icon: 'Sigma' },
+  { id: subId(10,2,2), name: 'Fisica II', icon: 'Atom' },
+  { id: subId(10,2,3), name: 'Estatistica para Engenharia', icon: 'BarChart3' },
+  { id: subId(10,2,4), name: 'Contabilidade para Engenheiros', icon: 'Receipt' },
+  { id: subId(10,3,1), name: 'Pesquisa Operacional I', icon: 'Calculator' },
+  { id: subId(10,3,2), name: 'Processos Produtivos', icon: 'Factory' },
+  { id: subId(10,3,3), name: 'Gestao da Qualidade', icon: 'CheckCircle' },
+  { id: subId(10,3,4), name: 'Engenharia Economica', icon: 'DollarSign' },
+  { id: subId(10,4,1), name: 'Pesquisa Operacional II', icon: 'Calculator' },
+  { id: subId(10,4,2), name: 'Planejamento da Producao', icon: 'Calendar' },
+  { id: subId(10,4,3), name: 'Logistica', icon: 'Truck' },
+  { id: subId(10,4,4), name: 'Gestao de Projetos', icon: 'ClipboardList' },
+  { id: subId(10,5,1), name: 'Simulacao de Sistemas', icon: 'Monitor' },
+  { id: subId(10,5,2), name: 'Ergonomia', icon: 'User' },
+  { id: subId(10,5,3), name: 'Lean Manufacturing', icon: 'Zap' },
+  { id: subId(10,5,4), name: 'Gestao de Custos', icon: 'DollarSign' },
+  { id: subId(10,6,1), name: 'Supply Chain Management', icon: 'Truck' },
+  { id: subId(10,6,2), name: 'Gestao da Inovacao', icon: 'Lightbulb' },
+  { id: subId(10,6,3), name: 'Sistemas de Informacao', icon: 'Database' },
+  { id: subId(10,6,4), name: 'Engenharia de Sustentabilidade', icon: 'Leaf' },
+  { id: subId(10,7,1), name: 'Business Intelligence', icon: 'BarChart3' },
+  { id: subId(10,7,2), name: 'Gestao Estrategica', icon: 'Compass' },
+  { id: subId(10,7,3), name: 'Startup e Inovacao', icon: 'Rocket' },
+  { id: subId(10,7,4), name: 'Topicos em Producao', icon: 'Factory' },
+  { id: subId(10,8,1), name: 'Projeto de Fabrica', icon: 'Building' },
+  { id: subId(10,8,2), name: 'Consultoria em Producao', icon: 'MessageSquare' },
+  { id: subId(10,8,3), name: 'Automacao da Producao', icon: 'Bot' },
+  { id: subId(10,8,4), name: 'Gestao de Pessoas', icon: 'Users' },
+  { id: subId(10,9,1), name: 'Projeto de Graduacao I', icon: 'Wrench' },
+  { id: subId(10,9,2), name: 'Topicos Avancados', icon: 'BookOpen' },
+  { id: subId(10,9,3), name: 'Empreendedorismo', icon: 'Rocket' },
+  { id: subId(10,9,4), name: 'Etica', icon: 'Heart' },
+  { id: subId(10,10,1), name: 'TCC Eng Producao', icon: 'GraduationCap' },
+  { id: subId(10,10,2), name: 'Projeto de Graduacao II', icon: 'Wrench' },
+  { id: subId(10,10,3), name: 'Seminario Final', icon: 'Presentation' },
+  { id: subId(10,10,4), name: 'Inovacao', icon: 'Lightbulb' },
+];
+
+// ============================================================================
+// All course-specific subject arrays grouped by course
+// ============================================================================
+const ALL_COURSE_SUBJECTS: { courseKey: keyof typeof COURSE_IDS; subjects: { id: string; name: string; icon: string }[] }[] = [
+  { courseKey: 'FGV_Admin', subjects: FGV_ADMIN_SUBJECTS },
+  { courseKey: 'FGV_Economia', subjects: FGV_ECONOMIA_SUBJECTS },
+  { courseKey: 'FGV_Direito', subjects: FGV_DIREITO_SUBJECTS },
+  { courseKey: 'Insper_Admin', subjects: INSPER_ADMIN_SUBJECTS },
+  { courseKey: 'Insper_Economia', subjects: INSPER_ECONOMIA_SUBJECTS },
+  { courseKey: 'Insper_Direito', subjects: INSPER_DIREITO_SUBJECTS },
+  { courseKey: 'Insper_EngComp', subjects: INSPER_ENGCOMP_SUBJECTS },
+  { courseKey: 'Insper_EngMec', subjects: INSPER_ENGMEC_SUBJECTS },
+  { courseKey: 'Insper_EngMecatronica', subjects: INSPER_ENGMECATRONICA_SUBJECTS },
+  { courseKey: 'Insper_EngProd', subjects: INSPER_ENGPROD_SUBJECTS },
+];
 
 const USER_IDS = {
   Rafael: '7187ab4d-c6a8-4a06-9ee2-e59db62045cb',
@@ -438,19 +550,84 @@ const CLASS_EVENT_IDS = {
 // ============================================================================
 
 const institutions = [
-  { id: INSTITUTION_IDS.FGV, name: 'Fundacao Getulio Vargas', shortName: 'FGV', city: 'Sao Paulo', type: 'UNIVERSITY' as InstitutionType, logoUrl: '/imgs/faculdades/fgv-logo-0.png', isEnabled: true },
-  { id: INSTITUTION_IDS.Insper, name: 'Insper Instituto de Ensino e Pesquisa', shortName: 'Insper', city: 'Sao Paulo', type: 'UNIVERSITY' as InstitutionType, logoUrl: '/imgs/faculdades/INsper.png', isEnabled: true },
-  { id: INSTITUTION_IDS.Inteli, name: 'Inteli - Instituto de Tecnologia e Lideranca', shortName: 'Inteli', city: 'Sao Paulo', type: 'UNIVERSITY' as InstitutionType, logoUrl: '/imgs/faculdades/inteli-logo.png', isEnabled: false },
-  { id: INSTITUTION_IDS['Col. Mobile'], name: 'Colegio Mobile', shortName: 'Mobile', city: 'Sao Paulo', type: 'SCHOOL' as InstitutionType, logoUrl: '/imgs/escolas/mobile.png', isEnabled: true },
-  { id: INSTITUTION_IDS['Col. Bandeirantes'], name: 'Colegio Bandeirantes', shortName: 'Band', city: 'Sao Paulo', type: 'SCHOOL' as InstitutionType, logoUrl: '/imgs/escolas/Band-logo.jpg', isEnabled: true },
-  { id: INSTITUTION_IDS['Col. Vertice'], name: 'Colegio Vertice', shortName: 'Vertice', city: 'Sao Paulo', type: 'SCHOOL' as InstitutionType, logoUrl: '/imgs/escolas/vertice.png', isEnabled: true },
+  {
+    id: INSTITUTION_IDS.FGV,
+    name: 'Fundacao Getulio Vargas',
+    shortName: 'FGV',
+    city: 'Sao Paulo',
+    type: 'UNIVERSITY' as InstitutionType,
+    logoUrl: '/imgs/faculdades/fgv-logo-0.png',
+    isEnabled: true,
+  },
+  {
+    id: INSTITUTION_IDS.Insper,
+    name: 'Insper Instituto de Ensino e Pesquisa',
+    shortName: 'Insper',
+    city: 'Sao Paulo',
+    type: 'UNIVERSITY' as InstitutionType,
+    logoUrl: '/imgs/faculdades/INsper.png',
+    isEnabled: true,
+  },
+  {
+    id: INSTITUTION_IDS.Inteli,
+    name: 'Inteli - Instituto de Tecnologia e Lideranca',
+    shortName: 'Inteli',
+    city: 'Sao Paulo',
+    type: 'UNIVERSITY' as InstitutionType,
+    logoUrl: '/imgs/faculdades/inteli-logo.png',
+    isEnabled: false,
+  },
+  {
+    id: INSTITUTION_IDS['Col. Mobile'],
+    name: 'Colegio Mobile',
+    shortName: 'Mobile',
+    city: 'Sao Paulo',
+    type: 'SCHOOL' as InstitutionType,
+    logoUrl: '/imgs/escolas/mobile.png',
+    isEnabled: true,
+  },
+  {
+    id: INSTITUTION_IDS['Col. Bandeirantes'],
+    name: 'Colegio Bandeirantes',
+    shortName: 'Band',
+    city: 'Sao Paulo',
+    type: 'SCHOOL' as InstitutionType,
+    logoUrl: '/imgs/escolas/Band-logo.jpg',
+    isEnabled: true,
+  },
+  {
+    id: INSTITUTION_IDS['Col. Vertice'],
+    name: 'Colegio Vertice',
+    shortName: 'Vertice',
+    city: 'Sao Paulo',
+    type: 'SCHOOL' as InstitutionType,
+    logoUrl: '/imgs/escolas/vertice.png',
+    isEnabled: true,
+  },
 ];
 
 // ============================================================================
-// SUBJECTS — original 13 + all new university subjects
+// COURSES
 // ============================================================================
 
-const originalSubjects = [
+const courses = [
+  { id: COURSE_IDS.FGV_Admin, institutionId: INSTITUTION_IDS.FGV, name: 'Administracao', slug: 'administracao', displayOrder: 1 },
+  { id: COURSE_IDS.FGV_Economia, institutionId: INSTITUTION_IDS.FGV, name: 'Economia', slug: 'economia', displayOrder: 2 },
+  { id: COURSE_IDS.FGV_Direito, institutionId: INSTITUTION_IDS.FGV, name: 'Direito', slug: 'direito', displayOrder: 3 },
+  { id: COURSE_IDS.Insper_Admin, institutionId: INSTITUTION_IDS.Insper, name: 'Administracao', slug: 'administracao', displayOrder: 1 },
+  { id: COURSE_IDS.Insper_Economia, institutionId: INSTITUTION_IDS.Insper, name: 'Economia', slug: 'economia', displayOrder: 2 },
+  { id: COURSE_IDS.Insper_Direito, institutionId: INSTITUTION_IDS.Insper, name: 'Direito', slug: 'direito', displayOrder: 3 },
+  { id: COURSE_IDS.Insper_EngComp, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia de Computacao', slug: 'engenharia-de-computacao', displayOrder: 4 },
+  { id: COURSE_IDS.Insper_EngMec, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia Mecanica', slug: 'engenharia-mecanica', displayOrder: 5 },
+  { id: COURSE_IDS.Insper_EngMecatronica, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia Mecatronica', slug: 'engenharia-mecatronica', displayOrder: 6 },
+  { id: COURSE_IDS.Insper_EngProd, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia de Producao', slug: 'engenharia-de-producao', displayOrder: 7 },
+];
+
+// ============================================================================
+// SUBJECTS — 13 original + all university course subjects
+// ============================================================================
+
+const schoolSubjects = [
   { id: SUBJECT_IDS['Calculo I'], name: 'Calculo I', icon: 'Sigma' },
   { id: SUBJECT_IDS['Direito Constitucional'], name: 'Direito Constitucional', icon: 'Scale' },
   { id: SUBJECT_IDS.Fisica, name: 'Fisica', icon: 'Atom' },
@@ -466,414 +643,229 @@ const originalSubjects = [
   { id: SUBJECT_IDS.Ingles, name: 'Ingles', icon: 'Languages' },
 ];
 
-// All new university subjects — map from UNI_SUBJECT_IDS
-const uniSubjectDefs: Array<{ name: string; icon: string }> = [
-  // FGV Admin
-  { name: 'Introducao a Administracao', icon: 'Briefcase' }, { name: 'Matematica Aplicada', icon: 'Calculator' },
-  { name: 'Contabilidade Basica', icon: 'Receipt' }, { name: 'Economia I', icon: 'TrendingUp' },
-  { name: 'Marketing I', icon: 'Megaphone' }, { name: 'Estatistica Aplicada', icon: 'BarChart3' },
-  { name: 'Direito Empresarial', icon: 'Scale' }, { name: 'Economia II', icon: 'TrendingUp' },
-  { name: 'Financas Corporativas', icon: 'DollarSign' }, { name: 'Gestao de Pessoas', icon: 'Users' },
-  { name: 'Comportamento Organizacional', icon: 'Brain' }, { name: 'Marketing II', icon: 'Target' },
-  { name: 'Estrategia Empresarial', icon: 'Compass' }, { name: 'Operacoes e Logistica', icon: 'Truck' },
-  { name: 'Gestao de Projetos', icon: 'ClipboardList' }, { name: 'Contabilidade Gerencial', icon: 'Calculator' },
-  { name: 'Empreendedorismo', icon: 'Rocket' }, { name: 'Comercio Internacional', icon: 'Globe' },
-  { name: 'Lideranca e Gestao', icon: 'Crown' }, { name: 'Analise de Investimentos', icon: 'LineChart' },
-  { name: 'Gestao da Inovacao', icon: 'Lightbulb' }, { name: 'Sustentabilidade Corporativa', icon: 'Leaf' },
-  { name: 'Negocios Digitais', icon: 'Laptop' }, { name: 'Auditoria', icon: 'Search' },
-  { name: 'Governanca Corporativa', icon: 'Building2' }, { name: 'Fusoes e Aquisicoes', icon: 'Handshake' },
-  { name: 'Gestao de Riscos', icon: 'ShieldAlert' }, { name: 'Consultoria Empresarial', icon: 'MessageSquare' },
-  { name: 'TCC em Administracao', icon: 'GraduationCap' }, { name: 'Etica Empresarial', icon: 'Heart' },
-  { name: 'Simulacao Empresarial', icon: 'Gamepad2' }, { name: 'Topicos Avancados em Gestao', icon: 'BookOpen' },
-  // FGV Economia
-  { name: 'Introducao a Economia', icon: 'TrendingUp' }, { name: 'Matematica para Economistas I', icon: 'Calculator' },
-  { name: 'Historia Economica', icon: 'Landmark' }, { name: 'Sociologia Economica', icon: 'Users' },
-  { name: 'Microeconomia I', icon: 'PieChart' }, { name: 'Macroeconomia I', icon: 'Globe' },
-  { name: 'Estatistica Economica', icon: 'BarChart3' }, { name: 'Matematica para Economistas II', icon: 'Calculator' },
-  { name: 'Microeconomia II', icon: 'PieChart' }, { name: 'Macroeconomia II', icon: 'Globe' },
-  { name: 'Econometria I', icon: 'LineChart' }, { name: 'Economia Brasileira', icon: 'MapPin' },
-  { name: 'Economia Internacional', icon: 'Globe' }, { name: 'Economia Monetaria', icon: 'Coins' },
-  { name: 'Econometria II', icon: 'LineChart' }, { name: 'Economia do Setor Publico', icon: 'Building2' },
-  { name: 'Desenvolvimento Economico', icon: 'Sprout' }, { name: 'Mercado Financeiro', icon: 'CandlestickChart' },
-  { name: 'Economia do Trabalho', icon: 'Briefcase' }, { name: 'Historia do Pensamento Economico', icon: 'BookOpen' },
-  { name: 'Economia Ambiental', icon: 'Leaf' }, { name: 'Economia da Tecnologia', icon: 'Cpu' },
-  { name: 'Regulacao Economica', icon: 'Gavel' }, { name: 'Comercio Internacional Econ', icon: 'Ship' },
-  { name: 'Politica Economica', icon: 'Landmark' }, { name: 'Economia Comportamental', icon: 'Brain' },
-  { name: 'Economia da Saude', icon: 'HeartPulse' }, { name: 'Topicos em Microeconomia', icon: 'Microscope' },
-  { name: 'TCC em Economia', icon: 'GraduationCap' }, { name: 'Economia Politica', icon: 'Scale' },
-  { name: 'Conjuntura Economica', icon: 'Newspaper' }, { name: 'Seminarios Avancados Econ', icon: 'Presentation' },
-  // FGV Direito
-  { name: 'Introducao ao Direito', icon: 'BookOpen' }, { name: 'Teoria do Estado', icon: 'Landmark' },
-  { name: 'Sociologia Juridica', icon: 'Users' }, { name: 'Historia do Direito', icon: 'ScrollText' },
-  { name: 'Direito Constitucional I', icon: 'Scale' }, { name: 'Direito Civil I', icon: 'FileText' },
-  { name: 'Direito Penal I', icon: 'Gavel' }, { name: 'Filosofia do Direito', icon: 'Brain' },
-  { name: 'Direito Constitucional II', icon: 'Scale' }, { name: 'Direito Civil II', icon: 'FileText' },
-  { name: 'Direito Penal II', icon: 'Gavel' }, { name: 'Direito Administrativo I', icon: 'Building2' },
-  { name: 'Direito do Trabalho I', icon: 'Briefcase' }, { name: 'Direito Tributario I', icon: 'Receipt' },
-  { name: 'Direito Civil III', icon: 'FileText' }, { name: 'Direito Administrativo II', icon: 'Building2' },
-  { name: 'Direito Processual Civil I', icon: 'Hammer' }, { name: 'Direito do Trabalho II', icon: 'Briefcase' },
-  { name: 'Direito Tributario II', icon: 'Receipt' }, { name: 'Direito Empresarial I', icon: 'Building' },
-  { name: 'Direito Processual Civil II', icon: 'Hammer' }, { name: 'Direito Processual Penal I', icon: 'ShieldAlert' },
-  { name: 'Direito Empresarial II', icon: 'Building' }, { name: 'Direito Internacional Publico', icon: 'Globe' },
-  { name: 'Direito Processual Penal II', icon: 'ShieldAlert' }, { name: 'Direito Ambiental', icon: 'Leaf' },
-  { name: 'Direito do Consumidor', icon: 'ShoppingCart' }, { name: 'Direito Digital', icon: 'Laptop' },
-  { name: 'Direito Previdenciario', icon: 'Umbrella' }, { name: 'Pratica Juridica I', icon: 'Scale' },
-  { name: 'Mediacao e Arbitragem', icon: 'Handshake' }, { name: 'Direitos Humanos', icon: 'Heart' },
-  { name: 'Pratica Juridica II', icon: 'Scale' }, { name: 'Etica Profissional', icon: 'Award' },
-  { name: 'Direito Eleitoral', icon: 'Vote' }, { name: 'Topicos Especiais em Direito', icon: 'Bookmark' },
-  { name: 'TCC em Direito', icon: 'GraduationCap' }, { name: 'Pratica Juridica III', icon: 'Scale' },
-  { name: 'Seminarios Avancados Dir', icon: 'Presentation' }, { name: 'Direito Comparado', icon: 'Globe' },
-  // Insper Admin
-  { name: 'Fundamentos de Administracao', icon: 'Briefcase' }, { name: 'Contabilidade Financeira', icon: 'Receipt' },
-  { name: 'Economia de Empresas', icon: 'TrendingUp' }, { name: 'Marketing Estrategico', icon: 'Target' },
-  { name: 'Estatistica para Negocios', icon: 'BarChart3' }, { name: 'Financas I', icon: 'DollarSign' },
-  { name: 'Financas II', icon: 'DollarSign' }, { name: 'Gestao de Operacoes', icon: 'Settings' },
-  { name: 'Pesquisa de Mercado', icon: 'Search' }, { name: 'Estrategia Competitiva', icon: 'Compass' },
-  { name: 'Contabilidade de Custos', icon: 'Calculator' }, { name: 'Empreendedorismo e Inovacao', icon: 'Rocket' },
-  { name: 'Business Analytics', icon: 'Database' }, { name: 'Negociacao', icon: 'Handshake' },
-  { name: 'Financas III', icon: 'LineChart' }, { name: 'Gestao de Tecnologia', icon: 'Cpu' },
-  { name: 'Marketing Digital', icon: 'Smartphone' }, { name: 'Supply Chain', icon: 'Truck' },
-  { name: 'Lideranca', icon: 'Crown' }, { name: 'Gestao Internacional', icon: 'Globe' },
-  { name: 'Valuation', icon: 'TrendingUp' }, { name: 'Startup Lab', icon: 'Zap' },
-  { name: 'Topicos em Estrategia', icon: 'Compass' }, { name: 'TCC Insper', icon: 'GraduationCap' },
-  { name: 'Business Simulation', icon: 'Gamepad2' }, { name: 'Etica nos Negocios', icon: 'Heart' },
-  { name: 'Projeto Integrador', icon: 'Puzzle' },
-  // Insper Economia
-  { name: 'Principios de Economia', icon: 'TrendingUp' }, { name: 'Calculo para Economia I', icon: 'Sigma' },
-  { name: 'Introducao a Estatistica', icon: 'BarChart3' }, { name: 'Historia Economica Global', icon: 'Landmark' },
-  { name: 'Calculo para Economia II', icon: 'Sigma' }, { name: 'Probabilidade e Estatistica', icon: 'Dice' },
-  { name: 'Economia Monetaria e Financeira', icon: 'Coins' }, { name: 'Mercados Financeiros', icon: 'CandlestickChart' },
-  { name: 'Game Theory', icon: 'Gamepad2' }, { name: 'Economia e Tecnologia', icon: 'Cpu' },
-  { name: 'Behavioral Economics', icon: 'Brain' }, { name: 'Regulacao e Concorrencia', icon: 'Gavel' },
-  { name: 'Data Science para Economia', icon: 'Database' }, { name: 'Politica Economica Brasileira', icon: 'Landmark' },
-  { name: 'Health Economics', icon: 'HeartPulse' }, { name: 'Environmental Economics', icon: 'Leaf' },
-  { name: 'Advanced Microeconomics', icon: 'Microscope' }, { name: 'TCC Economia Insper', icon: 'GraduationCap' },
-  { name: 'Macroeconomia Avancada', icon: 'Globe' }, { name: 'Seminarios Econ Insper', icon: 'Presentation' },
-  { name: 'Projeto Final Econ', icon: 'Puzzle' },
-  // Insper Direito
-  { name: 'Fundamentos do Direito', icon: 'BookOpen' }, { name: 'Teoria Geral do Estado', icon: 'Landmark' },
-  { name: 'Logica Juridica', icon: 'Brain' }, { name: 'Ciencia Politica', icon: 'Vote' },
-  { name: 'Direito Civil Parte Geral', icon: 'FileText' }, { name: 'Teoria do Direito', icon: 'BookOpen' },
-  { name: 'Direito das Obrigacoes', icon: 'FileText' }, { name: 'Direito Administrativo', icon: 'Building2' },
-  { name: 'Direito do Trabalho', icon: 'Briefcase' }, { name: 'Direito Tributario', icon: 'Receipt' },
-  { name: 'Direito dos Contratos', icon: 'FileText' }, { name: 'Processo Civil I', icon: 'Hammer' },
-  { name: 'Processo Civil II', icon: 'Hammer' }, { name: 'Processo Penal', icon: 'ShieldAlert' },
-  { name: 'Direito Digital e Tecnologia', icon: 'Laptop' }, { name: 'Resolucao de Conflitos', icon: 'Handshake' },
-  { name: 'Direito Societario', icon: 'Building2' }, { name: 'Compliance', icon: 'ShieldCheck' },
-  { name: 'Propriedade Intelectual', icon: 'Lightbulb' }, { name: 'Clinica Juridica I', icon: 'Stethoscope' },
-  { name: 'Direito Financeiro', icon: 'DollarSign' }, { name: 'Direito da Concorrencia', icon: 'Gavel' },
-  { name: 'Clinica Juridica II', icon: 'Stethoscope' }, { name: 'Direitos Fundamentais', icon: 'Heart' },
-  { name: 'Pratica Profissional', icon: 'Briefcase' }, { name: 'Direito e Economia', icon: 'TrendingUp' },
-  { name: 'Topicos Avancados Dir Insper', icon: 'Bookmark' }, { name: 'Etica e Deontologia', icon: 'Award' },
-  { name: 'TCC Direito Insper', icon: 'GraduationCap' }, { name: 'Projeto Final Juridico', icon: 'Puzzle' },
-  { name: 'Seminario de Pesquisa', icon: 'Presentation' }, { name: 'Direito Global', icon: 'Globe' },
-  // Insper Eng Computacao
-  { name: 'Introducao a Computacao', icon: 'Monitor' }, { name: 'Algebra Linear', icon: 'Grid3x3' },
-  { name: 'Calculo II', icon: 'Sigma' }, { name: 'Fisica II', icon: 'Atom' },
-  { name: 'Estrutura de Dados', icon: 'Database' }, { name: 'Programacao Orientada a Objetos', icon: 'Code' },
-  { name: 'Calculo III', icon: 'Sigma' }, { name: 'Circuitos Eletricos', icon: 'Zap' },
-  { name: 'Algoritmos Avancados', icon: 'Binary' }, { name: 'Banco de Dados', icon: 'Database' },
-  { name: 'Sinais e Sistemas', icon: 'Activity' }, { name: 'Redes de Computadores', icon: 'Network' },
-  { name: 'Engenharia de Software', icon: 'Code' }, { name: 'Sistemas Operacionais', icon: 'Terminal' },
-  { name: 'Inteligencia Artificial', icon: 'Brain' }, { name: 'Arquitetura de Computadores', icon: 'Cpu' },
-  { name: 'Compiladores', icon: 'FileCode' }, { name: 'Computacao Grafica', icon: 'Monitor' },
-  { name: 'Machine Learning', icon: 'Brain' }, { name: 'Sistemas Distribuidos', icon: 'Cloud' },
-  { name: 'Seguranca da Informacao', icon: 'Shield' }, { name: 'Desenvolvimento Web', icon: 'Globe' },
-  { name: 'Deep Learning', icon: 'Brain' }, { name: 'Cloud Computing', icon: 'Cloud' },
-  { name: 'DevOps', icon: 'Settings' }, { name: 'IoT', icon: 'Wifi' },
-  { name: 'Robotica', icon: 'Bot' }, { name: 'Processamento de Imagens', icon: 'Image' },
-  { name: 'Projeto de Sistemas', icon: 'Layout' }, { name: 'Blockchain', icon: 'Link' },
-  { name: 'Projeto de Graduacao I EC', icon: 'Wrench' }, { name: 'Topicos em IA', icon: 'Sparkles' },
-  { name: 'Empreendedorismo Tech', icon: 'Rocket' }, { name: 'Etica em Tecnologia', icon: 'Heart' },
-  { name: 'TCC Eng Computacao', icon: 'GraduationCap' }, { name: 'Projeto de Graduacao II EC', icon: 'Wrench' },
-  { name: 'Seminario Final EC', icon: 'Presentation' }, { name: 'Inovacao EC', icon: 'Lightbulb' },
-  // Insper Eng Mecanica
-  { name: 'Desenho Tecnico', icon: 'Pencil' }, { name: 'Quimica Geral', icon: 'FlaskConical' },
-  { name: 'Mecanica dos Solidos I', icon: 'Hammer' }, { name: 'Ciencia dos Materiais', icon: 'Layers' },
-  { name: 'Termodinamica', icon: 'Thermometer' }, { name: 'Mecanica dos Solidos II', icon: 'Hammer' },
-  { name: 'Mecanica dos Fluidos I', icon: 'Waves' }, { name: 'Transferencia de Calor', icon: 'Flame' },
-  { name: 'Mecanica dos Fluidos II', icon: 'Waves' }, { name: 'Dinamica de Maquinas', icon: 'Cog' },
-  { name: 'Sistemas de Controle', icon: 'Gauge' }, { name: 'Elementos de Maquinas', icon: 'Wrench' },
-  { name: 'Processos de Fabricacao', icon: 'Factory' }, { name: 'Vibracoes Mecanicas', icon: 'Activity' },
-  { name: 'Projeto Mecanico I', icon: 'Ruler' }, { name: 'Projeto Mecanico II', icon: 'Ruler' },
-  { name: 'Automacao Industrial', icon: 'Bot' }, { name: 'Mecanica Computacional', icon: 'Monitor' },
-  { name: 'Energia e Meio Ambiente', icon: 'Leaf' }, { name: 'Engenharia Automotiva', icon: 'Car' },
-  { name: 'Sistemas Termicos', icon: 'Thermometer' }, { name: 'Materiais Avancados', icon: 'Layers' },
-  { name: 'Gestao da Producao', icon: 'ClipboardList' }, { name: 'Manutencao Industrial', icon: 'Wrench' },
-  { name: 'Engenharia de Qualidade', icon: 'CheckCircle' }, { name: 'Projeto Integrado EM', icon: 'Layout' },
-  { name: 'Simulacao Numerica', icon: 'Calculator' }, { name: 'Projeto de Graduacao I EM', icon: 'Wrench' },
-  { name: 'Topicos em Mecanica', icon: 'Cog' }, { name: 'Etica em Engenharia', icon: 'Heart' },
-  { name: 'TCC Eng Mecanica', icon: 'GraduationCap' }, { name: 'Projeto de Graduacao II EM', icon: 'Wrench' },
-  { name: 'Seminario Final EM', icon: 'Presentation' }, { name: 'Inovacao Industrial', icon: 'Lightbulb' },
-  // Insper Eng Mecatronica
-  { name: 'Introducao a Mecatronica', icon: 'Bot' }, { name: 'Logica Digital', icon: 'Binary' },
-  { name: 'Programacao para Engenharia', icon: 'Code' }, { name: 'Eletronica Analogica', icon: 'Radio' },
-  { name: 'Mecanica dos Solidos MT', icon: 'Hammer' }, { name: 'Eletronica Digital', icon: 'Cpu' },
-  { name: 'Controle Automatico I', icon: 'Gauge' }, { name: 'Microcontroladores', icon: 'Chip' },
-  { name: 'Instrumentacao', icon: 'Microscope' }, { name: 'Controle Automatico II', icon: 'Gauge' },
-  { name: 'Robotica I', icon: 'Bot' }, { name: 'Sistemas Embarcados', icon: 'Cpu' },
-  { name: 'Acionamentos Eletricos', icon: 'Zap' }, { name: 'Robotica II', icon: 'Bot' },
-  { name: 'Automacao Industrial MT', icon: 'Factory' }, { name: 'Processamento de Sinais', icon: 'Activity' },
-  { name: 'Visao Computacional', icon: 'Eye' }, { name: 'IA para Engenharia', icon: 'Brain' },
-  { name: 'Sistemas CPS', icon: 'Network' }, { name: 'Manufatura Avancada', icon: 'Factory' },
-  { name: 'IoT Industrial', icon: 'Wifi' }, { name: 'Projeto Mecatronico', icon: 'Layout' },
-  { name: 'Sistemas de Energia', icon: 'Battery' }, { name: 'Controle Robusto', icon: 'ShieldCheck' },
-  { name: 'Manutencao Preditiva', icon: 'Search' }, { name: 'Projeto de Graduacao I MT', icon: 'Wrench' },
-  { name: 'Topicos em Mecatronica', icon: 'Bot' }, { name: 'Empreendedorismo MT', icon: 'Rocket' },
-  { name: 'Etica MT', icon: 'Heart' }, { name: 'TCC Eng Mecatronica', icon: 'GraduationCap' },
-  { name: 'Projeto de Graduacao II MT', icon: 'Wrench' }, { name: 'Seminario Final MT', icon: 'Presentation' },
-  { name: 'Inovacao MT', icon: 'Lightbulb' },
-  // Insper Eng Producao
-  { name: 'Introducao a Eng de Producao', icon: 'ClipboardList' }, { name: 'Economia para Engenheiros', icon: 'TrendingUp' },
-  { name: 'Estatistica para Engenharia', icon: 'BarChart3' }, { name: 'Contabilidade para Engenheiros', icon: 'Receipt' },
-  { name: 'Pesquisa Operacional I', icon: 'Calculator' }, { name: 'Processos Produtivos', icon: 'Factory' },
-  { name: 'Gestao da Qualidade', icon: 'CheckCircle' }, { name: 'Engenharia Economica', icon: 'DollarSign' },
-  { name: 'Pesquisa Operacional II', icon: 'Calculator' }, { name: 'Planejamento da Producao', icon: 'Calendar' },
-  { name: 'Logistica', icon: 'Truck' }, { name: 'Simulacao de Sistemas', icon: 'Monitor' },
-  { name: 'Ergonomia', icon: 'User' }, { name: 'Lean Manufacturing', icon: 'Zap' },
-  { name: 'Gestao de Custos', icon: 'DollarSign' }, { name: 'Supply Chain Management', icon: 'Truck' },
-  { name: 'Gestao da Inovacao EP', icon: 'Lightbulb' }, { name: 'Sistemas de Informacao', icon: 'Database' },
-  { name: 'Engenharia de Sustentabilidade', icon: 'Leaf' }, { name: 'Business Intelligence', icon: 'BarChart3' },
-  { name: 'Gestao Estrategica', icon: 'Compass' }, { name: 'Startup e Inovacao', icon: 'Rocket' },
-  { name: 'Topicos em Producao', icon: 'Factory' }, { name: 'Projeto de Fabrica', icon: 'Building' },
-  { name: 'Consultoria em Producao', icon: 'MessageSquare' }, { name: 'Automacao da Producao', icon: 'Bot' },
-  { name: 'Gestao de Pessoas EP', icon: 'Users' }, { name: 'Projeto de Graduacao I EP', icon: 'Wrench' },
-  { name: 'Topicos Avancados EP', icon: 'BookOpen' }, { name: 'Empreendedorismo EP', icon: 'Rocket' },
-  { name: 'Etica EP', icon: 'Heart' }, { name: 'TCC Eng Producao', icon: 'GraduationCap' },
-  { name: 'Projeto de Graduacao II EP', icon: 'Wrench' }, { name: 'Seminario Final EP', icon: 'Presentation' },
-  { name: 'Inovacao EP', icon: 'Lightbulb' },
-];
-
-const allSubjects = [
-  ...originalSubjects,
-  ...uniSubjectDefs.map((s) => ({ id: UNI_SUBJECT_IDS[s.name], name: s.name, icon: s.icon })),
-];
-
-// ============================================================================
-// COURSES
-// ============================================================================
-
-const courses = [
-  { id: COURSE_IDS.FGV_Admin, institutionId: INSTITUTION_IDS.FGV, name: 'Administracao', slug: 'administracao', displayOrder: 1 },
-  { id: COURSE_IDS.FGV_Economia, institutionId: INSTITUTION_IDS.FGV, name: 'Economia', slug: 'economia', displayOrder: 2 },
-  { id: COURSE_IDS.FGV_Direito, institutionId: INSTITUTION_IDS.FGV, name: 'Direito', slug: 'direito', displayOrder: 3 },
-  { id: COURSE_IDS.Insper_Admin, institutionId: INSTITUTION_IDS.Insper, name: 'Administracao', slug: 'administracao', displayOrder: 1 },
-  { id: COURSE_IDS.Insper_Economia, institutionId: INSTITUTION_IDS.Insper, name: 'Economia', slug: 'economia', displayOrder: 2 },
-  { id: COURSE_IDS.Insper_Direito, institutionId: INSTITUTION_IDS.Insper, name: 'Direito', slug: 'direito', displayOrder: 3 },
-  { id: COURSE_IDS.Insper_EngComp, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia de Computacao', slug: 'eng-computacao', displayOrder: 4 },
-  { id: COURSE_IDS.Insper_EngMec, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia Mecanica', slug: 'eng-mecanica', displayOrder: 5 },
-  { id: COURSE_IDS.Insper_EngMecatronica, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia Mecatronica', slug: 'eng-mecatronica', displayOrder: 6 },
-  { id: COURSE_IDS.Insper_EngProd, institutionId: INSTITUTION_IDS.Insper, name: 'Engenharia de Producao', slug: 'eng-producao', displayOrder: 7 },
-];
+const allUniversitySubjects = ALL_COURSE_SUBJECTS.flatMap(c => c.subjects);
+const allSubjects = [...schoolSubjects, ...allUniversitySubjects];
 
 // ============================================================================
 // INSTITUTION-SUBJECT ASSOCIATIONS
-// Helper to generate deterministic UUIDs for junction rows
 // ============================================================================
 
-let isCounter = 0;
-function nextIsId(): string {
-  isCounter++;
-  const hex = isCounter.toString(16).padStart(12, '0');
-  return `c0000000-0000-4000-8000-${hex}`;
-}
-
-type ISRow = { id: string; institutionId: string; subjectId: string; courseId: string | null; yearLabel: string; yearOrder: number };
-
-function courseSemesters(instId: string, courseId: string, semesters: string[][]): ISRow[] {
-  const rows: ISRow[] = [];
-  semesters.forEach((subjects, i) => {
-    const sem = i + 1;
-    for (const name of subjects) {
-      rows.push({
-        id: nextIsId(),
-        institutionId: instId,
-        subjectId: sid(name),
-        courseId,
-        yearLabel: `Semestre ${sem}`,
-        yearOrder: sem,
-      });
-    }
-  });
-  return rows;
-}
-
-function schoolYear(instId: string, yearOrder: number, subjects: string[]): ISRow[] {
-  return subjects.map((name) => ({
-    id: nextIsId(),
-    institutionId: instId,
-    subjectId: sid(name),
-    courseId: null,
-    yearLabel: `${yearOrder}o Ano`,
-    yearOrder,
-  }));
-}
-
-const institutionSubjects: ISRow[] = [
-  // === Schools ===
-  // Col. Mobile
-  ...schoolYear(INSTITUTION_IDS['Col. Mobile'], 1, ['Matematica', 'Lingua Portuguesa', 'Biologia', 'Fisica', 'Historia', 'Ingles']),
-  ...schoolYear(INSTITUTION_IDS['Col. Mobile'], 2, ['Matematica', 'Lingua Portuguesa', 'Quimica', 'Fisica', 'Estudos Literarios', 'Geografia']),
-  ...schoolYear(INSTITUTION_IDS['Col. Mobile'], 3, ['Matematica', 'Redacao', 'Quimica', 'Biologia', 'Fisica', 'Historia']),
-  // Col. Bandeirantes
-  ...schoolYear(INSTITUTION_IDS['Col. Bandeirantes'], 1, ['Matematica', 'Fisica', 'Lingua Portuguesa']),
-  ...schoolYear(INSTITUTION_IDS['Col. Bandeirantes'], 2, ['Quimica', 'Matematica', 'Biologia']),
-  ...schoolYear(INSTITUTION_IDS['Col. Bandeirantes'], 3, ['Redacao', 'Fisica', 'Matematica']),
-  // Col. Vertice
-  ...schoolYear(INSTITUTION_IDS['Col. Vertice'], 1, ['Matematica', 'Lingua Portuguesa']),
-  ...schoolYear(INSTITUTION_IDS['Col. Vertice'], 2, ['Quimica', 'Fisica']),
-  ...schoolYear(INSTITUTION_IDS['Col. Vertice'], 3, ['Redacao', 'Matematica']),
-
-  // === FGV Admin (8 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.FGV, COURSE_IDS.FGV_Admin, [
-    ['Introducao a Administracao', 'Matematica Aplicada', 'Contabilidade Basica', 'Economia I'],
-    ['Marketing I', 'Estatistica Aplicada', 'Direito Empresarial', 'Economia II'],
-    ['Financas Corporativas', 'Gestao de Pessoas', 'Comportamento Organizacional', 'Marketing II'],
-    ['Estrategia Empresarial', 'Operacoes e Logistica', 'Gestao de Projetos', 'Contabilidade Gerencial'],
-    ['Empreendedorismo', 'Comercio Internacional', 'Lideranca e Gestao', 'Analise de Investimentos'],
-    ['Gestao da Inovacao', 'Sustentabilidade Corporativa', 'Negocios Digitais', 'Auditoria'],
-    ['Governanca Corporativa', 'Fusoes e Aquisicoes', 'Gestao de Riscos', 'Consultoria Empresarial'],
-    ['TCC em Administracao', 'Etica Empresarial', 'Simulacao Empresarial', 'Topicos Avancados em Gestao'],
-  ]),
-
-  // === FGV Economia (8 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.FGV, COURSE_IDS.FGV_Economia, [
-    ['Introducao a Economia', 'Matematica para Economistas I', 'Historia Economica', 'Sociologia Economica'],
-    ['Microeconomia I', 'Macroeconomia I', 'Estatistica Economica', 'Matematica para Economistas II'],
-    ['Microeconomia II', 'Macroeconomia II', 'Econometria I', 'Economia Brasileira'],
-    ['Economia Internacional', 'Economia Monetaria', 'Econometria II', 'Economia do Setor Publico'],
-    ['Desenvolvimento Economico', 'Mercado Financeiro', 'Economia do Trabalho', 'Historia do Pensamento Economico'],
-    ['Economia Ambiental', 'Economia da Tecnologia', 'Regulacao Economica', 'Comercio Internacional Econ'],
-    ['Politica Economica', 'Economia Comportamental', 'Economia da Saude', 'Topicos em Microeconomia'],
-    ['TCC em Economia', 'Economia Politica', 'Conjuntura Economica', 'Seminarios Avancados Econ'],
-  ]),
-
-  // === FGV Direito (10 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.FGV, COURSE_IDS.FGV_Direito, [
-    ['Introducao ao Direito', 'Teoria do Estado', 'Sociologia Juridica', 'Historia do Direito'],
-    ['Direito Constitucional I', 'Direito Civil I', 'Direito Penal I', 'Filosofia do Direito'],
-    ['Direito Constitucional II', 'Direito Civil II', 'Direito Penal II', 'Direito Administrativo I'],
-    ['Direito do Trabalho I', 'Direito Tributario I', 'Direito Civil III', 'Direito Administrativo II'],
-    ['Direito Processual Civil I', 'Direito do Trabalho II', 'Direito Tributario II', 'Direito Empresarial I'],
-    ['Direito Processual Civil II', 'Direito Processual Penal I', 'Direito Empresarial II', 'Direito Internacional Publico'],
-    ['Direito Processual Penal II', 'Direito Ambiental', 'Direito do Consumidor', 'Direito Digital'],
-    ['Direito Previdenciario', 'Pratica Juridica I', 'Mediacao e Arbitragem', 'Direitos Humanos'],
-    ['Pratica Juridica II', 'Etica Profissional', 'Direito Eleitoral', 'Topicos Especiais em Direito'],
-    ['TCC em Direito', 'Pratica Juridica III', 'Seminarios Avancados Dir', 'Direito Comparado'],
-  ]),
-
-  // === Insper Admin (8 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.Insper, COURSE_IDS.Insper_Admin, [
-    ['Fundamentos de Administracao', 'Calculo I', 'Contabilidade Financeira', 'Economia de Empresas'],
-    ['Marketing Estrategico', 'Estatistica para Negocios', 'Financas I', 'Comportamento Organizacional'],
-    ['Financas II', 'Gestao de Operacoes', 'Pesquisa de Mercado', 'Direito Empresarial'],
-    ['Estrategia Competitiva', 'Gestao de Pessoas', 'Contabilidade de Custos', 'Economia Brasileira'],
-    ['Empreendedorismo e Inovacao', 'Business Analytics', 'Negociacao', 'Financas III'],
-    ['Gestao de Tecnologia', 'Marketing Digital', 'Supply Chain', 'Lideranca'],
-    ['Gestao Internacional', 'Valuation', 'Startup Lab', 'Topicos em Estrategia'],
-    ['TCC Insper', 'Business Simulation', 'Etica nos Negocios', 'Projeto Integrador'],
-  ]),
-
-  // === Insper Economia (8 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.Insper, COURSE_IDS.Insper_Economia, [
-    ['Principios de Economia', 'Calculo para Economia I', 'Introducao a Estatistica', 'Historia Economica Global'],
-    ['Microeconomia I', 'Macroeconomia I', 'Calculo para Economia II', 'Probabilidade e Estatistica'],
-    ['Microeconomia II', 'Macroeconomia II', 'Econometria I', 'Economia Brasileira'],
-    ['Economia Internacional', 'Economia Monetaria e Financeira', 'Econometria II', 'Economia do Setor Publico'],
-    ['Desenvolvimento Economico', 'Mercados Financeiros', 'Economia do Trabalho', 'Game Theory'],
-    ['Economia e Tecnologia', 'Behavioral Economics', 'Regulacao e Concorrencia', 'Data Science para Economia'],
-    ['Politica Economica Brasileira', 'Health Economics', 'Environmental Economics', 'Advanced Microeconomics'],
-    ['TCC Economia Insper', 'Macroeconomia Avancada', 'Seminarios Econ Insper', 'Projeto Final Econ'],
-  ]),
-
-  // === Insper Direito (10 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.Insper, COURSE_IDS.Insper_Direito, [
-    ['Fundamentos do Direito', 'Teoria Geral do Estado', 'Logica Juridica', 'Ciencia Politica'],
-    ['Direito Constitucional I', 'Direito Civil Parte Geral', 'Direito Penal I', 'Teoria do Direito'],
-    ['Direito Constitucional II', 'Direito das Obrigacoes', 'Direito Penal II', 'Direito Administrativo'],
-    ['Direito do Trabalho', 'Direito Tributario', 'Direito dos Contratos', 'Processo Civil I'],
-    ['Processo Civil II', 'Direito Empresarial I', 'Processo Penal', 'Direito Internacional Publico'],
-    ['Direito Digital e Tecnologia', 'Direito Ambiental', 'Direito do Consumidor', 'Resolucao de Conflitos'],
-    ['Direito Societario', 'Compliance', 'Propriedade Intelectual', 'Clinica Juridica I'],
-    ['Direito Financeiro', 'Direito da Concorrencia', 'Clinica Juridica II', 'Direitos Fundamentais'],
-    ['Pratica Profissional', 'Direito e Economia', 'Topicos Avancados Dir Insper', 'Etica e Deontologia'],
-    ['TCC Direito Insper', 'Projeto Final Juridico', 'Seminario de Pesquisa', 'Direito Global'],
-  ]),
-
-  // === Insper Eng Computacao (10 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.Insper, COURSE_IDS.Insper_EngComp, [
-    ['Calculo I', 'Fisica', 'Introducao a Computacao', 'Algebra Linear'],
-    ['Calculo II', 'Fisica II', 'Estrutura de Dados', 'Programacao Orientada a Objetos'],
-    ['Calculo III', 'Circuitos Eletricos', 'Algoritmos Avancados', 'Banco de Dados'],
-    ['Sinais e Sistemas', 'Redes de Computadores', 'Engenharia de Software', 'Sistemas Operacionais'],
-    ['Inteligencia Artificial', 'Arquitetura de Computadores', 'Compiladores', 'Computacao Grafica'],
-    ['Machine Learning', 'Sistemas Distribuidos', 'Seguranca da Informacao', 'Desenvolvimento Web'],
-    ['Deep Learning', 'Cloud Computing', 'DevOps', 'IoT'],
-    ['Robotica', 'Processamento de Imagens', 'Projeto de Sistemas', 'Blockchain'],
-    ['Projeto de Graduacao I EC', 'Topicos em IA', 'Empreendedorismo Tech', 'Etica em Tecnologia'],
-    ['TCC Eng Computacao', 'Projeto de Graduacao II EC', 'Seminario Final EC', 'Inovacao EC'],
-  ]),
-
-  // === Insper Eng Mecanica (10 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.Insper, COURSE_IDS.Insper_EngMec, [
-    ['Calculo I', 'Fisica', 'Desenho Tecnico', 'Quimica Geral'],
-    ['Calculo II', 'Fisica II', 'Mecanica dos Solidos I', 'Ciencia dos Materiais'],
-    ['Calculo III', 'Termodinamica', 'Mecanica dos Solidos II', 'Mecanica dos Fluidos I'],
-    ['Transferencia de Calor', 'Mecanica dos Fluidos II', 'Dinamica de Maquinas', 'Sistemas de Controle'],
-    ['Elementos de Maquinas', 'Processos de Fabricacao', 'Vibracoes Mecanicas', 'Projeto Mecanico I'],
-    ['Projeto Mecanico II', 'Automacao Industrial', 'Mecanica Computacional', 'Energia e Meio Ambiente'],
-    ['Engenharia Automotiva', 'Sistemas Termicos', 'Materiais Avancados', 'Gestao da Producao'],
-    ['Manutencao Industrial', 'Engenharia de Qualidade', 'Projeto Integrado EM', 'Simulacao Numerica'],
-    ['Projeto de Graduacao I EM', 'Topicos em Mecanica', 'Empreendedorismo', 'Etica em Engenharia'],
-    ['TCC Eng Mecanica', 'Projeto de Graduacao II EM', 'Seminario Final EM', 'Inovacao Industrial'],
-  ]),
-
-  // === Insper Eng Mecatronica (10 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.Insper, COURSE_IDS.Insper_EngMecatronica, [
-    ['Calculo I', 'Fisica', 'Introducao a Mecatronica', 'Logica Digital'],
-    ['Calculo II', 'Fisica II', 'Circuitos Eletricos', 'Programacao para Engenharia'],
-    ['Calculo III', 'Eletronica Analogica', 'Mecanica dos Solidos MT', 'Sinais e Sistemas'],
-    ['Eletronica Digital', 'Controle Automatico I', 'Microcontroladores', 'Instrumentacao'],
-    ['Controle Automatico II', 'Robotica I', 'Sistemas Embarcados', 'Acionamentos Eletricos'],
-    ['Robotica II', 'Automacao Industrial MT', 'Processamento de Sinais', 'Visao Computacional'],
-    ['IA para Engenharia', 'Sistemas CPS', 'Manufatura Avancada', 'IoT Industrial'],
-    ['Projeto Mecatronico', 'Sistemas de Energia', 'Controle Robusto', 'Manutencao Preditiva'],
-    ['Projeto de Graduacao I MT', 'Topicos em Mecatronica', 'Empreendedorismo MT', 'Etica MT'],
-    ['TCC Eng Mecatronica', 'Projeto de Graduacao II MT', 'Seminario Final MT', 'Inovacao MT'],
-  ]),
-
-  // === Insper Eng Producao (10 semesters) ===
-  ...courseSemesters(INSTITUTION_IDS.Insper, COURSE_IDS.Insper_EngProd, [
-    ['Calculo I', 'Fisica', 'Introducao a Eng de Producao', 'Economia para Engenheiros'],
-    ['Calculo II', 'Fisica II', 'Estatistica para Engenharia', 'Contabilidade para Engenheiros'],
-    ['Pesquisa Operacional I', 'Processos Produtivos', 'Gestao da Qualidade', 'Engenharia Economica'],
-    ['Pesquisa Operacional II', 'Planejamento da Producao', 'Logistica', 'Gestao de Projetos'],
-    ['Simulacao de Sistemas', 'Ergonomia', 'Lean Manufacturing', 'Gestao de Custos'],
-    ['Supply Chain Management', 'Gestao da Inovacao EP', 'Sistemas de Informacao', 'Engenharia de Sustentabilidade'],
-    ['Business Intelligence', 'Gestao Estrategica', 'Startup e Inovacao', 'Topicos em Producao'],
-    ['Projeto de Fabrica', 'Consultoria em Producao', 'Automacao da Producao', 'Gestao de Pessoas EP'],
-    ['Projeto de Graduacao I EP', 'Topicos Avancados EP', 'Empreendedorismo EP', 'Etica EP'],
-    ['TCC Eng Producao', 'Projeto de Graduacao II EP', 'Seminario Final EP', 'Inovacao EP'],
-  ]),
+// Pre-generated UUIDs for school institution-subject junction rows
+const IS_IDS = [
+  '02ef7015-d02d-4b34-8592-106d88167879', '21800d8f-5e28-4d35-81e4-0c53ed27f422',
+  '5bbfbecb-18fb-4173-b128-560e4747a50d', 'b5c3e1b2-09ef-4dc6-8ecd-79c810991116',
+  'e8c98ce3-e1ac-4a57-bbb6-72320c8736d1', '1aebd5b7-85dc-4b9a-b0d5-8099d4299c46',
+  '15433278-04d6-4f5c-be1a-ce3af08da15f', '41491b82-0beb-44ab-bf4c-7d973916b4cf',
+  '61f1bfe2-f556-4e17-9547-535b3fbfa93f', 'd871187f-ffac-449d-9e9d-4506d41d09d0',
+  '95fa09a9-9537-4fd2-bcc8-5a98eadb9a69', '16ab6c7a-754e-4c32-ac02-de09e524a282',
+  'a87a350e-1ff5-4aec-893d-cddc8f1a822c', '370573ae-3633-4166-88a3-e8e59da0a45c',
+  '13132d6d-7c11-41f9-a185-066676624db3', '1fcb677f-6df9-477a-9899-44cfeb29bda3',
+  'a93a07df-5eaf-4e70-9c5d-d9ca428cf71c', '2bbee544-721e-4345-bbe8-2d4aa339db98',
+  '1573eb97-6389-4197-b52c-5c558108f834', '5857e9a3-19ad-4376-b898-786bd29b0b39',
+  'f2afce69-0137-466d-a26d-e2fb9f91c2cd', 'a1f13bd5-100f-48cf-b0f4-98ae31db4019',
+  '8030e305-d198-40a2-a0ae-a71b9c352ee5', '6b6ee5d0-9f1b-481f-b28b-fb63818bac90',
+  '60c38fb5-cf51-455c-bc2b-75d5953ba825', '53ed299e-d81d-4094-a8f3-7d75c4ec1462',
+  'dbbd06a5-18b5-4d5c-9ecd-51aa704f6a20', '0799223a-cb82-4625-9bea-2e33853501aa',
+  '8bf41112-bcce-4cb5-a2d8-75ee3c6f51f3', 'ba0517f8-1c61-41f3-a55b-a754044bc9fd',
+  '8641a6a2-fe94-4586-82e1-942fcc4d79da', '1bd754d4-96b8-4313-86e7-559ada99b3fa',
+  'c57098cd-8551-4fd9-adff-cd25b597bb18',
 ];
 
+// School institution-subjects (no courseId)
+const schoolInstitutionSubjects = [
+  // Colegio Mobile — 1o Ano
+  { id: IS_IDS[0], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[1], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS['Lingua Portuguesa'], yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[2], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Biologia, yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[3], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Fisica, yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[4], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Historia, yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[5], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Ingles, yearLabel: '1o Ano', yearOrder: 1 },
+  // Colegio Mobile — 2o Ano
+  { id: IS_IDS[6], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[7], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS['Lingua Portuguesa'], yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[8], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Quimica, yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[9], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Fisica, yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[10], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS['Estudos Literarios'], yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[11], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Geografia, yearLabel: '2o Ano', yearOrder: 2 },
+  // Colegio Mobile — 3o Ano
+  { id: IS_IDS[12], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[13], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Redacao, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[14], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Quimica, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[15], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Biologia, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[16], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Fisica, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[17], institutionId: INSTITUTION_IDS['Col. Mobile'], subjectId: SUBJECT_IDS.Historia, yearLabel: '3o Ano', yearOrder: 3 },
+  // Colegio Bandeirantes — 1o Ano
+  { id: IS_IDS[18], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[19], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Fisica, yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[20], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS['Lingua Portuguesa'], yearLabel: '1o Ano', yearOrder: 1 },
+  // Colegio Bandeirantes — 2o Ano
+  { id: IS_IDS[21], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Quimica, yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[22], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[23], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Biologia, yearLabel: '2o Ano', yearOrder: 2 },
+  // Colegio Bandeirantes — 3o Ano
+  { id: IS_IDS[24], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Redacao, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[25], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Fisica, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[26], institutionId: INSTITUTION_IDS['Col. Bandeirantes'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '3o Ano', yearOrder: 3 },
+  // Colegio Vertice — 1o Ano
+  { id: IS_IDS[27], institutionId: INSTITUTION_IDS['Col. Vertice'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '1o Ano', yearOrder: 1 },
+  { id: IS_IDS[28], institutionId: INSTITUTION_IDS['Col. Vertice'], subjectId: SUBJECT_IDS['Lingua Portuguesa'], yearLabel: '1o Ano', yearOrder: 1 },
+  // Colegio Vertice — 2o Ano
+  { id: IS_IDS[29], institutionId: INSTITUTION_IDS['Col. Vertice'], subjectId: SUBJECT_IDS.Quimica, yearLabel: '2o Ano', yearOrder: 2 },
+  { id: IS_IDS[30], institutionId: INSTITUTION_IDS['Col. Vertice'], subjectId: SUBJECT_IDS.Fisica, yearLabel: '2o Ano', yearOrder: 2 },
+  // Colegio Vertice — 3o Ano
+  { id: IS_IDS[31], institutionId: INSTITUTION_IDS['Col. Vertice'], subjectId: SUBJECT_IDS.Redacao, yearLabel: '3o Ano', yearOrder: 3 },
+  { id: IS_IDS[32], institutionId: INSTITUTION_IDS['Col. Vertice'], subjectId: SUBJECT_IDS.Matematica, yearLabel: '3o Ano', yearOrder: 3 },
+];
+
+// University institution-subjects — generated from course subject arrays
+function isId(course: number, semester: number, index: number): string {
+  const c = String(course).padStart(2, '0');
+  const s = String(semester).padStart(2, '0');
+  const n = String(index).padStart(2, '0');
+  return `c0000000-${c}${s}-4${n}0-8000-000000000001`;
+}
+
+const COURSE_TO_INSTITUTION: Record<string, string> = {
+  FGV_Admin: INSTITUTION_IDS.FGV,
+  FGV_Economia: INSTITUTION_IDS.FGV,
+  FGV_Direito: INSTITUTION_IDS.FGV,
+  Insper_Admin: INSTITUTION_IDS.Insper,
+  Insper_Economia: INSTITUTION_IDS.Insper,
+  Insper_Direito: INSTITUTION_IDS.Insper,
+  Insper_EngComp: INSTITUTION_IDS.Insper,
+  Insper_EngMec: INSTITUTION_IDS.Insper,
+  Insper_EngMecatronica: INSTITUTION_IDS.Insper,
+  Insper_EngProd: INSTITUTION_IDS.Insper,
+};
+
+const COURSE_TO_INDEX: Record<string, number> = {
+  FGV_Admin: 1,
+  FGV_Economia: 2,
+  FGV_Direito: 3,
+  Insper_Admin: 4,
+  Insper_Economia: 5,
+  Insper_Direito: 6,
+  Insper_EngComp: 7,
+  Insper_EngMec: 8,
+  Insper_EngMecatronica: 9,
+  Insper_EngProd: 10,
+};
+
+// Build university institution-subjects
+const universityInstitutionSubjects: {
+  id: string;
+  institutionId: string;
+  subjectId: string;
+  courseId: string;
+  yearLabel: string;
+  yearOrder: number;
+}[] = [];
+
+for (const { courseKey, subjects: courseSubs } of ALL_COURSE_SUBJECTS) {
+  const courseIdx = COURSE_TO_INDEX[courseKey];
+  const institutionId = COURSE_TO_INSTITUTION[courseKey];
+  const courseId = COURSE_IDS[courseKey];
+
+  for (const sub of courseSubs) {
+    // Parse semester and index from subject ID: b0000000-CCSS-4NN0-8000-000000000001
+    const parts = sub.id.split('-');
+    const ccss = parts[1];
+    const semester = parseInt(ccss.slice(2, 4), 10);
+    const nn0 = parts[2];
+    const index = parseInt(nn0.slice(1, 3), 10);
+
+    universityInstitutionSubjects.push({
+      id: isId(courseIdx, semester, index),
+      institutionId,
+      subjectId: sub.id,
+      courseId,
+      yearLabel: `Semestre ${semester}`,
+      yearOrder: semester,
+    });
+  }
+}
+
 // ============================================================================
-// USERS, PROFILES, CLASS EVENTS — unchanged from original
+// USERS — 4 teacher users
 // ============================================================================
 
 const users = [
-  { id: USER_IDS.Rafael, supabaseId: 'fake-supabase-rafael', name: 'Rafael Prado', email: 'rafael@docens.test', phone: '+55 11 99999-0001', role: 'TEACHER' as UserRole },
-  { id: USER_IDS.Luiza, supabaseId: 'fake-supabase-luiza', name: 'Luiza Costa', email: 'luiza@docens.test', phone: '+55 11 99999-0002', role: 'TEACHER' as UserRole },
-  { id: USER_IDS.Carlos, supabaseId: 'fake-supabase-carlos', name: 'Carlos Mendes', email: 'carlos@docens.test', phone: '+55 11 99999-0003', role: 'TEACHER' as UserRole },
-  { id: USER_IDS.Mariana, supabaseId: 'fake-supabase-mariana', name: 'Mariana Silva', email: 'mariana@docens.test', phone: '+55 11 99999-0004', role: 'TEACHER' as UserRole },
+  {
+    id: USER_IDS.Rafael,
+    supabaseId: 'fake-supabase-rafael',
+    name: 'Rafael Prado',
+    email: 'rafael@docens.test',
+    phone: '+55 11 99999-0001',
+    role: 'TEACHER' as UserRole,
+  },
+  {
+    id: USER_IDS.Luiza,
+    supabaseId: 'fake-supabase-luiza',
+    name: 'Luiza Costa',
+    email: 'luiza@docens.test',
+    phone: '+55 11 99999-0002',
+    role: 'TEACHER' as UserRole,
+  },
+  {
+    id: USER_IDS.Carlos,
+    supabaseId: 'fake-supabase-carlos',
+    name: 'Carlos Mendes',
+    email: 'carlos@docens.test',
+    phone: '+55 11 99999-0003',
+    role: 'TEACHER' as UserRole,
+  },
+  {
+    id: USER_IDS.Mariana,
+    supabaseId: 'fake-supabase-mariana',
+    name: 'Mariana Silva',
+    email: 'mariana@docens.test',
+    phone: '+55 11 99999-0004',
+    role: 'TEACHER' as UserRole,
+  },
 ];
 
+// ============================================================================
+// TEACHER PROFILES
+// ============================================================================
+
 const teacherProfiles = [
-  { id: TEACHER_PROFILE_IDS.Rafael, userId: USER_IDS.Rafael, photo: 'RP', headline: 'Especialista em Calculo e Estatistica', bio: 'Professor com 10 anos de experiencia em universidades de Sao Paulo. Mestrado em Matematica Aplicada pela USP.', isVerified: true },
-  { id: TEACHER_PROFILE_IDS.Luiza, userId: USER_IDS.Luiza, photo: 'LC', headline: 'Professora de Direito e Redacao', bio: 'Advogada e educadora. Doutora em Direito Constitucional pela FGV. Apaixonada por ensino.', isVerified: true },
-  { id: TEACHER_PROFILE_IDS.Carlos, userId: USER_IDS.Carlos, photo: 'CM', headline: 'Professor de Matematica e Fisica', bio: 'Engenheiro e professor. Mais de 15 anos preparando alunos para vestibulares e concursos.', isVerified: true },
-  { id: TEACHER_PROFILE_IDS.Mariana, userId: USER_IDS.Mariana, photo: 'MS', headline: 'Especialista em Calculo e Fisica', bio: 'Doutora em Fisica pela Unicamp. Experiencia em universidades de tecnologia e engenharia.', isVerified: true },
+  {
+    id: TEACHER_PROFILE_IDS.Rafael,
+    userId: USER_IDS.Rafael,
+    photo: 'RP',
+    headline: 'Especialista em Calculo e Estatistica',
+    bio: 'Professor com 10 anos de experiencia em universidades de Sao Paulo. Mestrado em Matematica Aplicada pela USP.',
+    isVerified: true,
+  },
+  {
+    id: TEACHER_PROFILE_IDS.Luiza,
+    userId: USER_IDS.Luiza,
+    photo: 'LC',
+    headline: 'Professora de Direito e Redacao',
+    bio: 'Advogada e educadora. Doutora em Direito Constitucional pela FGV. Apaixonada por ensino.',
+    isVerified: true,
+  },
+  {
+    id: TEACHER_PROFILE_IDS.Carlos,
+    userId: USER_IDS.Carlos,
+    photo: 'CM',
+    headline: 'Professor de Matematica e Fisica',
+    bio: 'Engenheiro e professor. Mais de 15 anos preparando alunos para vestibulares e concursos.',
+    isVerified: true,
+  },
+  {
+    id: TEACHER_PROFILE_IDS.Mariana,
+    userId: USER_IDS.Mariana,
+    photo: 'MS',
+    headline: 'Especialista em Calculo e Fisica',
+    bio: 'Doutora em Fisica pela Unicamp. Experiencia em universidades de tecnologia e engenharia.',
+    isVerified: true,
+  },
 ];
+
+// ============================================================================
+// TEACHER-INSTITUTION JUNCTION ROWS
+// ============================================================================
 
 const teacherInstitutions = [
   { id: '4a915dd6-ae26-4f4d-b709-598814a18da8', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, institutionId: INSTITUTION_IDS.Insper },
@@ -886,6 +878,10 @@ const teacherInstitutions = [
   { id: '63deed0b-c9e6-4979-a3b4-211859ec5dcd', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, institutionId: INSTITUTION_IDS.Insper },
 ];
 
+// ============================================================================
+// TEACHER-SUBJECT JUNCTION ROWS
+// ============================================================================
+
 const teacherSubjects = [
   { id: '08f159e8-cc15-450c-9c01-d140d19aae6a', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, subjectId: SUBJECT_IDS['Calculo I'] },
   { id: '3883b760-fb5f-4a6b-95f6-b51c8869ee87', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, subjectId: SUBJECT_IDS.Estatistica },
@@ -897,28 +893,200 @@ const teacherSubjects = [
   { id: '90de48ae-e825-4afd-bbfc-69d8fb5d06c2', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, subjectId: SUBJECT_IDS.Fisica },
 ];
 
+// ============================================================================
+// CLASS EVENTS — 8 events
+// ============================================================================
+
 const classEvents = [
-  { id: CLASS_EVENT_IDS['Rafael-Calculo-Insper'], title: 'Calculo I - Limites e Derivadas', description: 'Aula intensiva sobre limites, continuidade e derivadas. Ideal para revisao antes da P1.', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, subjectId: SUBJECT_IDS['Calculo I'], institutionId: INSTITUTION_IDS.Insper, startsAt: new Date('2026-03-15T14:00:00Z'), durationMin: 90, priceCents: 9900, capacity: 50, soldSeats: 22, publicationStatus: 'PUBLISHED' as PublicationStatus, meetingStatus: 'LOCKED' as MeetingStatus, meetingUrl: null },
-  { id: CLASS_EVENT_IDS['Rafael-Estatistica-Insper'], title: 'Estatistica Descritiva - Medidas de Tendencia Central', description: 'Revisao completa de media, mediana, moda e desvio padrao com exercicios praticos.', teacherProfileId: TEACHER_PROFILE_IDS.Rafael, subjectId: SUBJECT_IDS.Estatistica, institutionId: INSTITUTION_IDS.Insper, startsAt: new Date('2026-03-22T10:00:00Z'), durationMin: 60, priceCents: 7900, capacity: 40, soldSeats: 15, publicationStatus: 'PUBLISHED' as PublicationStatus, meetingStatus: 'LOCKED' as MeetingStatus, meetingUrl: null },
-  { id: CLASS_EVENT_IDS['Luiza-DirConst-FGV'], title: 'Direito Constitucional - Principios Fundamentais', description: 'Estudo aprofundado dos principios fundamentais da Constituicao Federal de 1988.', teacherProfileId: TEACHER_PROFILE_IDS.Luiza, subjectId: SUBJECT_IDS['Direito Constitucional'], institutionId: INSTITUTION_IDS.FGV, startsAt: new Date('2026-04-05T19:00:00Z'), durationMin: 120, priceCents: 14900, capacity: 80, soldSeats: 45, publicationStatus: 'PUBLISHED' as PublicationStatus, meetingStatus: 'LOCKED' as MeetingStatus, meetingUrl: null },
-  { id: CLASS_EVENT_IDS['Carlos-Matematica-Mobile'], title: 'Matematica - Funcoes Exponenciais e Logaritmicas', description: 'Revisao de funcoes exponenciais e logaritmicas com foco em vestibular.', teacherProfileId: TEACHER_PROFILE_IDS.Carlos, subjectId: SUBJECT_IDS.Matematica, institutionId: INSTITUTION_IDS['Col. Mobile'], startsAt: new Date('2026-04-10T15:00:00Z'), durationMin: 90, priceCents: 5900, capacity: 30, soldSeats: 10, publicationStatus: 'PUBLISHED' as PublicationStatus, meetingStatus: 'LOCKED' as MeetingStatus, meetingUrl: null },
-  { id: CLASS_EVENT_IDS['Carlos-Fisica-Bandeirantes'], title: 'Fisica - Cinematica Escalar', description: 'Aula sobre MRU e MRUV com resolucao de exercicios classicos de vestibular.', teacherProfileId: TEACHER_PROFILE_IDS.Carlos, subjectId: SUBJECT_IDS.Fisica, institutionId: INSTITUTION_IDS['Col. Bandeirantes'], startsAt: new Date('2026-01-20T14:00:00Z'), durationMin: 90, priceCents: 6900, capacity: 60, soldSeats: 48, publicationStatus: 'FINISHED' as PublicationStatus, meetingStatus: 'RELEASED' as MeetingStatus, meetingUrl: 'https://meet.docens.app/fisica-cinematica-abc123' },
-  { id: CLASS_EVENT_IDS['Mariana-Fisica-Insper'], title: 'Fisica - Termodinamica e Calorimetria', description: 'Conceitos fundamentais de termodinamica aplicados a problemas de engenharia.', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, subjectId: SUBJECT_IDS.Fisica, institutionId: INSTITUTION_IDS.Insper, startsAt: new Date('2026-02-10T16:00:00Z'), durationMin: 60, priceCents: 8900, capacity: 45, soldSeats: 38, publicationStatus: 'FINISHED' as PublicationStatus, meetingStatus: 'LOCKED' as MeetingStatus, meetingUrl: null },
-  { id: CLASS_EVENT_IDS['Mariana-Calculo-Inteli'], title: 'Calculo I - Integrais Definidas (RASCUNHO)', description: 'Aula sobre integrais definidas e o Teorema Fundamental do Calculo. Ainda em preparacao.', teacherProfileId: TEACHER_PROFILE_IDS.Mariana, subjectId: SUBJECT_IDS['Calculo I'], institutionId: INSTITUTION_IDS.Inteli, startsAt: new Date('2026-04-20T10:00:00Z'), durationMin: 90, priceCents: 9900, capacity: 35, soldSeats: 0, publicationStatus: 'DRAFT' as PublicationStatus, meetingStatus: 'LOCKED' as MeetingStatus, meetingUrl: null },
-  { id: CLASS_EVENT_IDS['Luiza-Redacao-FGV'], title: 'Redacao Argumentativa - Estrutura e Coesao (RASCUNHO)', description: 'Tecnicas de redacao argumentativa para provas discursivas. Ainda sendo revisada.', teacherProfileId: TEACHER_PROFILE_IDS.Luiza, subjectId: SUBJECT_IDS.Redacao, institutionId: INSTITUTION_IDS.FGV, startsAt: new Date('2026-03-30T18:00:00Z'), durationMin: 120, priceCents: 19900, capacity: 100, soldSeats: 0, publicationStatus: 'DRAFT' as PublicationStatus, meetingStatus: 'LOCKED' as MeetingStatus, meetingUrl: null },
+  {
+    id: CLASS_EVENT_IDS['Rafael-Calculo-Insper'],
+    title: 'Calculo I - Limites e Derivadas',
+    description: 'Aula intensiva sobre limites, continuidade e derivadas. Ideal para revisao antes da P1.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Rafael,
+    subjectId: SUBJECT_IDS['Calculo I'],
+    institutionId: INSTITUTION_IDS.Insper,
+    startsAt: new Date('2026-03-15T14:00:00Z'),
+    durationMin: 90,
+    priceCents: 9900,
+    capacity: 50,
+    soldSeats: 22,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Rafael-Estatistica-Insper'],
+    title: 'Estatistica Descritiva - Medidas de Tendencia Central',
+    description: 'Revisao completa de media, mediana, moda e desvio padrao com exercicios praticos.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Rafael,
+    subjectId: SUBJECT_IDS.Estatistica,
+    institutionId: INSTITUTION_IDS.Insper,
+    startsAt: new Date('2026-03-22T10:00:00Z'),
+    durationMin: 60,
+    priceCents: 7900,
+    capacity: 40,
+    soldSeats: 15,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Luiza-DirConst-FGV'],
+    title: 'Direito Constitucional - Principios Fundamentais',
+    description: 'Estudo aprofundado dos principios fundamentais da Constituicao Federal de 1988.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Luiza,
+    subjectId: SUBJECT_IDS['Direito Constitucional'],
+    institutionId: INSTITUTION_IDS.FGV,
+    startsAt: new Date('2026-04-05T19:00:00Z'),
+    durationMin: 120,
+    priceCents: 14900,
+    capacity: 80,
+    soldSeats: 45,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Carlos-Matematica-Mobile'],
+    title: 'Matematica - Funcoes Exponenciais e Logaritmicas',
+    description: 'Revisao de funcoes exponenciais e logaritmicas com foco em vestibular.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Carlos,
+    subjectId: SUBJECT_IDS.Matematica,
+    institutionId: INSTITUTION_IDS['Col. Mobile'],
+    startsAt: new Date('2026-04-10T15:00:00Z'),
+    durationMin: 90,
+    priceCents: 5900,
+    capacity: 30,
+    soldSeats: 10,
+    publicationStatus: 'PUBLISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Carlos-Fisica-Bandeirantes'],
+    title: 'Fisica - Cinematica Escalar',
+    description: 'Aula sobre MRU e MRUV com resolucao de exercicios classicos de vestibular.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Carlos,
+    subjectId: SUBJECT_IDS.Fisica,
+    institutionId: INSTITUTION_IDS['Col. Bandeirantes'],
+    startsAt: new Date('2026-01-20T14:00:00Z'),
+    durationMin: 90,
+    priceCents: 6900,
+    capacity: 60,
+    soldSeats: 48,
+    publicationStatus: 'FINISHED' as PublicationStatus,
+    meetingStatus: 'RELEASED' as MeetingStatus,
+    meetingUrl: 'https://meet.docens.app/fisica-cinematica-abc123',
+  },
+  {
+    id: CLASS_EVENT_IDS['Mariana-Fisica-Insper'],
+    title: 'Fisica - Termodinamica e Calorimetria',
+    description: 'Conceitos fundamentais de termodinamica aplicados a problemas de engenharia.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Mariana,
+    subjectId: SUBJECT_IDS.Fisica,
+    institutionId: INSTITUTION_IDS.Insper,
+    startsAt: new Date('2026-02-10T16:00:00Z'),
+    durationMin: 60,
+    priceCents: 8900,
+    capacity: 45,
+    soldSeats: 38,
+    publicationStatus: 'FINISHED' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Mariana-Calculo-Inteli'],
+    title: 'Calculo I - Integrais Definidas (RASCUNHO)',
+    description: 'Aula sobre integrais definidas e o Teorema Fundamental do Calculo. Ainda em preparacao.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Mariana,
+    subjectId: SUBJECT_IDS['Calculo I'],
+    institutionId: INSTITUTION_IDS.Inteli,
+    startsAt: new Date('2026-04-20T10:00:00Z'),
+    durationMin: 90,
+    priceCents: 9900,
+    capacity: 35,
+    soldSeats: 0,
+    publicationStatus: 'DRAFT' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
+  {
+    id: CLASS_EVENT_IDS['Luiza-Redacao-FGV'],
+    title: 'Redacao Argumentativa - Estrutura e Coesao (RASCUNHO)',
+    description: 'Tecnicas de redacao argumentativa para provas discursivas. Ainda sendo revisada.',
+    teacherProfileId: TEACHER_PROFILE_IDS.Luiza,
+    subjectId: SUBJECT_IDS.Redacao,
+    institutionId: INSTITUTION_IDS.FGV,
+    startsAt: new Date('2026-03-30T18:00:00Z'),
+    durationMin: 120,
+    priceCents: 19900,
+    capacity: 100,
+    soldSeats: 0,
+    publicationStatus: 'DRAFT' as PublicationStatus,
+    meetingStatus: 'LOCKED' as MeetingStatus,
+    meetingUrl: null,
+  },
 ];
+
+// ============================================================================
+// STUDENT USERS
+// ============================================================================
 
 const studentUsers = [
-  { id: STUDENT_USER_IDS.Ana, supabaseId: 'fake-supabase-ana', name: 'Ana Silva', email: 'ana@docens.test', phone: '+55 11 98888-0001', role: 'STUDENT' as UserRole },
-  { id: STUDENT_USER_IDS.CarlosAluno, supabaseId: 'fake-supabase-carlos-aluno', name: 'Carlos Aluno Mendes', email: 'carlos.aluno@docens.test', phone: '+55 11 98888-0002', role: 'STUDENT' as UserRole },
-  { id: STUDENT_USER_IDS.Beatriz, supabaseId: 'fake-supabase-beatriz', name: 'Beatriz Santos', email: 'beatriz@docens.test', phone: '+55 11 98888-0003', role: 'STUDENT' as UserRole },
+  {
+    id: STUDENT_USER_IDS.Ana,
+    supabaseId: 'fake-supabase-ana',
+    name: 'Ana Silva',
+    email: 'ana@docens.test',
+    phone: '+55 11 98888-0001',
+    role: 'STUDENT' as UserRole,
+  },
+  {
+    id: STUDENT_USER_IDS.CarlosAluno,
+    supabaseId: 'fake-supabase-carlos-aluno',
+    name: 'Carlos Aluno Mendes',
+    email: 'carlos.aluno@docens.test',
+    phone: '+55 11 98888-0002',
+    role: 'STUDENT' as UserRole,
+  },
+  {
+    id: STUDENT_USER_IDS.Beatriz,
+    supabaseId: 'fake-supabase-beatriz',
+    name: 'Beatriz Santos',
+    email: 'beatriz@docens.test',
+    phone: '+55 11 98888-0003',
+    role: 'STUDENT' as UserRole,
+  },
 ];
 
+// ============================================================================
+// STUDENT PROFILES
+// ============================================================================
+
 const studentProfiles = [
-  { id: STUDENT_PROFILE_IDS.Ana, userId: STUDENT_USER_IDS.Ana, preferredInstitutionId: INSTITUTION_IDS.Insper, labels: ['vestibular', 'engenharia'] },
-  { id: STUDENT_PROFILE_IDS.CarlosAluno, userId: STUDENT_USER_IDS.CarlosAluno, preferredInstitutionId: INSTITUTION_IDS.Inteli, labels: ['tecnologia'] },
-  { id: STUDENT_PROFILE_IDS.Beatriz, userId: STUDENT_USER_IDS.Beatriz, preferredInstitutionId: INSTITUTION_IDS.FGV, labels: ['direito', 'concurso'] },
+  {
+    id: STUDENT_PROFILE_IDS.Ana,
+    userId: STUDENT_USER_IDS.Ana,
+    preferredInstitutionId: INSTITUTION_IDS.Insper,
+    labels: ['vestibular', 'engenharia'],
+  },
+  {
+    id: STUDENT_PROFILE_IDS.CarlosAluno,
+    userId: STUDENT_USER_IDS.CarlosAluno,
+    preferredInstitutionId: INSTITUTION_IDS.Inteli,
+    labels: ['tecnologia'],
+  },
+  {
+    id: STUDENT_PROFILE_IDS.Beatriz,
+    userId: STUDENT_USER_IDS.Beatriz,
+    preferredInstitutionId: INSTITUTION_IDS.FGV,
+    labels: ['direito', 'concurso'],
+  },
 ];
+
+// ============================================================================
+// STUDENT-INSTITUTION JUNCTION ROWS
+// ============================================================================
 
 const studentInstitutions = [
   { id: '2490d37e-586e-4ffe-a001-f305c44f5e43', studentProfileId: STUDENT_PROFILE_IDS.Ana, institutionId: INSTITUTION_IDS.FGV },
@@ -962,13 +1130,15 @@ async function main() {
   console.log(`  ${courses.length} courses seeded.`);
 
   console.log('Seeding institution-subject associations...');
-  await prisma.institutionSubject.createMany({ data: institutionSubjects });
-  console.log(`  ${institutionSubjects.length} institution-subject associations seeded.`);
+  for (const is of schoolInstitutionSubjects) {
+    await prisma.institutionSubject.create({ data: is });
+  }
+  await prisma.institutionSubject.createMany({ data: universityInstitutionSubjects });
+  const totalIS = schoolInstitutionSubjects.length + universityInstitutionSubjects.length;
+  console.log(`  ${totalIS} institution-subject associations seeded.`);
 
   console.log('Seeding users...');
-  for (const user of users) {
-    await prisma.user.create({ data: user });
-  }
+  await prisma.user.createMany({ data: users });
   console.log(`  ${users.length} users seeded.`);
 
   console.log('Seeding teacher profiles...');
@@ -992,9 +1162,7 @@ async function main() {
   console.log(`  ${classEvents.length} class events seeded.`);
 
   console.log('Seeding student users...');
-  for (const user of studentUsers) {
-    await prisma.user.create({ data: user });
-  }
+  await prisma.user.createMany({ data: studentUsers });
   console.log(`  ${studentUsers.length} student users seeded.`);
 
   console.log('Seeding student profiles...');
@@ -1024,7 +1192,6 @@ export {
   INSTITUTION_IDS,
   COURSE_IDS,
   SUBJECT_IDS,
-  UNI_SUBJECT_IDS,
   USER_IDS,
   TEACHER_PROFILE_IDS,
   CLASS_EVENT_IDS,
