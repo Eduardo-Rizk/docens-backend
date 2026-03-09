@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -25,7 +24,7 @@ export class AuthService {
     });
   }
 
-  async register(dto: RegisterDto) {
+  async register(clerkId: string, dto: RegisterDto) {
     if (
       dto.role === Role.TEACHER &&
       (!dto.subjectIds || dto.subjectIds.length === 0)
@@ -36,111 +35,102 @@ export class AuthService {
       });
     }
 
-    // 1. Create Clerk user
-    let clerkUser: { id: string };
-    try {
-      clerkUser = await this.clerk.users.createUser({
-        emailAddress: [dto.email],
-        password: dto.password,
-        firstName: dto.name.split(' ')[0],
-        lastName: dto.name.split(' ').slice(1).join(' ') || undefined,
-        publicMetadata: { role: dto.role },
-      });
-    } catch (err: any) {
-      if (err?.errors?.[0]?.code === 'form_identifier_exists') {
-        throw new ConflictException({
-          error: 'CONFLICT',
-          message: 'Email already registered',
-        });
-      }
-      throw new InternalServerErrorException({
-        error: 'AUTH_ERROR',
-        message: err?.errors?.[0]?.message ?? 'Failed to create auth user',
+    // Check if user already exists
+    const existing = await this.prisma.user.findUnique({
+      where: { clerkId },
+    });
+    if (existing) {
+      throw new ConflictException({
+        error: 'CONFLICT',
+        message: 'User already registered',
       });
     }
 
-    // 2. Create DB user + profile in a Prisma transaction
+    // Set role metadata on Clerk user
     try {
-      const txResult = await this.prisma.$transaction(
-        async (tx: Prisma.TransactionClient) => {
-          const user = await tx.user.create({
-            data: {
-              clerkId: clerkUser.id,
-              name: dto.name,
-              email: dto.email,
-              phone: dto.phone,
-              role: dto.role,
-            },
-          });
+      await this.clerk.users.updateUser(clerkId, {
+        publicMetadata: { role: dto.role },
+      });
+    } catch {
+      // Non-critical — continue with DB creation
+    }
 
-          if (dto.role === Role.STUDENT) {
-            const studentProfile = await tx.studentProfile.create({
-              data: {
-                userId: user.id,
-                labels: dto.labels ?? [],
-              },
-            });
+    // Create DB user + profile in a Prisma transaction
+    const txResult = await this.prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        const user = await tx.user.create({
+          data: {
+            clerkId,
+            name: dto.name,
+            email: dto.email,
+            phone: dto.phone,
+            role: dto.role,
+          },
+        });
 
-            if (dto.institutionIds.length > 0) {
-              await tx.studentInstitution.createMany({
-                data: dto.institutionIds.map((institutionId) => ({
-                  studentProfileId: studentProfile.id,
-                  institutionId,
-                })),
-              });
-            }
-
-            return {
-              user,
-              studentProfile,
-              teacherProfile: null,
-            };
-          }
-
-          // TEACHER path
-          const teacherProfile = await tx.teacherProfile.create({
+        if (dto.role === Role.STUDENT) {
+          const studentProfile = await tx.studentProfile.create({
             data: {
               userId: user.id,
               labels: dto.labels ?? [],
-              photoUrl: dto.photoUrl ?? null,
             },
           });
 
           if (dto.institutionIds.length > 0) {
-            await tx.teacherInstitution.createMany({
+            await tx.studentInstitution.createMany({
               data: dto.institutionIds.map((institutionId) => ({
-                teacherProfileId: teacherProfile.id,
+                studentProfileId: studentProfile.id,
                 institutionId,
-              })),
-            });
-          }
-
-          if (dto.subjectIds!.length > 0) {
-            await tx.teacherSubject.createMany({
-              data: dto.subjectIds!.map((subjectId) => ({
-                teacherProfileId: teacherProfile.id,
-                subjectId,
               })),
             });
           }
 
           return {
             user,
-            studentProfile: null,
-            teacherProfile,
+            studentProfile,
+            teacherProfile: null,
           };
-        },
-      );
+        }
 
-      return {
-        message: 'Account created successfully.',
-        user: txResult.user,
-      };
-    } catch (err) {
-      // Clean up Clerk user on Prisma failure
-      await this.clerk.users.deleteUser(clerkUser.id);
-      throw err;
-    }
+        // TEACHER path
+        const teacherProfile = await tx.teacherProfile.create({
+          data: {
+            userId: user.id,
+            labels: dto.labels ?? [],
+            photoUrl: dto.photoUrl ?? null,
+          },
+        });
+
+        if (dto.institutionIds.length > 0) {
+          await tx.teacherInstitution.createMany({
+            data: dto.institutionIds.map((institutionId) => ({
+              teacherProfileId: teacherProfile.id,
+              institutionId,
+            })),
+          });
+        }
+
+        if (dto.subjectIds!.length > 0) {
+          await tx.teacherSubject.createMany({
+            data: dto.subjectIds!.map((subjectId) => ({
+              teacherProfileId: teacherProfile.id,
+              subjectId,
+            })),
+          });
+        }
+
+        return {
+          user,
+          studentProfile: null,
+          teacherProfile,
+        };
+      },
+    );
+
+    return {
+      message: 'Account created successfully.',
+      user: txResult.user,
+    };
   }
 
   async updatePassword(clerkId: string, newPassword: string) {

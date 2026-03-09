@@ -3,7 +3,6 @@ import {
   IsNotEmpty,
   MaxLength,
   IsEmail,
-  MinLength,
   IsEnum,
   IsUUID,
   ArrayMinSize,
@@ -25,10 +24,6 @@ export class RegisterDto {
   @IsNotEmpty()
   @MaxLength(30)
   phone: string;
-
-  @IsString()
-  @MinLength(6)
-  password: string;
 
   @IsEnum(Role)
   role: Role;
