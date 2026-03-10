@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         cacheMaxAge: 86_400_000,
         cacheMaxEntries: 5,
         rateLimit: true,
-        jwksRequestsPerMinute: 2,
+        jwksRequestsPerMinute: 10,
         jwksUri,
       }),
       algorithms: ['RS256'],

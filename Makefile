@@ -1,3 +1,14 @@
+# ─── Docker ─────────────────────────────────────────────────────────
+
+db-up:             ## Start local Postgres via Docker
+	docker compose up -d postgres
+
+db-down:           ## Stop local Postgres
+	docker compose down
+
+db-local-setup:    ## Full local setup (start + migrate + seed)
+	docker compose up -d postgres && sleep 2 && npx prisma migrate deploy && npx prisma db seed
+
 # ─── Database ────────────────────────────────────────────────────────
 
 db-reset:          ## Reset DB (drop + migrate + seed)
@@ -51,4 +62,4 @@ help:              ## Show this help
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help
-.PHONY: db-reset db-seed db-migrate db-new db-status db-studio db-generate db-push dev build lint test test-watch test-e2e help
+.PHONY: db-up db-down db-local-setup db-reset db-seed db-migrate db-new db-status db-studio db-generate db-push dev build lint test test-watch test-e2e help
