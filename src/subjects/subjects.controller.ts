@@ -11,4 +11,9 @@ export class SubjectsController {
   findAll() {
     return this.subjectsService.findAll();
   }
+
+  @Get('by-institution')
+  findByInstitution() {
+    return this.subjectsService.findByInstitution();
+  }
 }
