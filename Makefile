@@ -35,6 +35,32 @@ db-generate:       ## Regenerate Prisma Client
 db-push:           ## Push schema to DB without migration (dev only)
 	npx prisma db push
 
+# ─── Cleanup ────────────────────────────────────────────────────────
+
+clerk-clear:       ## Delete all Clerk users (uses CLERK_SECRET_KEY from .env)
+	@CLERK_KEY=$$(grep CLERK_SECRET_KEY .env | cut -d= -f2); \
+	echo "Fetching Clerk users..."; \
+	USER_IDS=$$(curl -sS -H "Authorization: Bearer $$CLERK_KEY" \
+		"https://api.clerk.com/v1/users?limit=100" | \
+		node -e "const d=require('fs').readFileSync('/dev/stdin','utf8'); \
+		JSON.parse(d).forEach(u=>console.log(u.id))"); \
+	if [ -z "$$USER_IDS" ]; then \
+		echo "No Clerk users found."; \
+	else \
+		COUNT=$$(echo "$$USER_IDS" | wc -l | tr -d ' '); \
+		echo "Deleting $$COUNT Clerk user(s)..."; \
+		echo "$$USER_IDS" | while read -r uid; do \
+			curl -sS -X DELETE -H "Authorization: Bearer $$CLERK_KEY" \
+				"https://api.clerk.com/v1/users/$$uid" > /dev/null && \
+				echo "  Deleted $$uid"; \
+		done; \
+		echo "Done."; \
+	fi
+
+nuke:              ## Reset DB + delete all Clerk users (full wipe)
+	@echo "=== Wiping Clerk users ===" && $(MAKE) clerk-clear
+	@echo "=== Resetting database ===" && npx prisma migrate reset --force
+
 # ─── Dev ─────────────────────────────────────────────────────────────
 
 dev:               ## Start dev server
@@ -62,4 +88,4 @@ help:              ## Show this help
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help
-.PHONY: db-up db-down db-local-setup db-reset db-seed db-migrate db-new db-status db-studio db-generate db-push dev build lint test test-watch test-e2e help
+.PHONY: db-up db-down db-local-setup db-reset db-seed db-migrate db-new db-status db-studio db-generate db-push clerk-clear nuke dev build lint test test-watch test-e2e help
